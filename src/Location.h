@@ -2,22 +2,15 @@
 #define LOCATION_H_
 
 /*
-    struct for representing locations in the grid.
+    struct for representing locations in the Grid.
 */
 struct Location
 {
-    int row, col;
+    int Row, Col;
 
-    Location()
-    {
-        row = col = 0;
-    };
+    Location();
 
-    Location(int r, int c)
-    {
-        row = r;
-        col = c;
-    };
+    Location(int row, int col);
 };
 
 #endif //LOCATION_H_

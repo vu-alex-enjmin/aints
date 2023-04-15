@@ -4,29 +4,16 @@
 #include <vector>
 
 /*
-    struct for representing a square in the grid.
+    struct for representing a square in the Grid.
 */
 struct Square
 {
-    bool isVisible, isWater, isHill, isFood;
-    int ant, hillPlayer;
-    std::vector<int> deadAnts;
+    bool IsVisible, IsWater, IsHill, IsFood;
+    int Ant, HillPlayer;
 
-    Square()
-    {
-        isVisible = isWater = isHill = isFood = 0;
-        ant = hillPlayer = -1;
-    };
-
+    Square();
     //resets the information for the square except water information
-    void reset()
-    {
-        isVisible = 0;
-        isHill = 0;
-        isFood = 0;
-        ant = hillPlayer = -1;
-        deadAnts.clear();
-    };
+    void Reset();
 };
 
 #endif //SQUARE_H_

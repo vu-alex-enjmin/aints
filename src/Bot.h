@@ -8,14 +8,14 @@
 */
 struct Bot
 {
-    State state;
+    State State;
 
     Bot();
 
-    void playGame();    //plays a single game of Ants
+    void PlayGame();    //plays a single game of Ants
 
-    void makeMoves();   //makes moves for a single turn
-    void endTurn();     //indicates to the engine that it has made its moves
+    void MakeMoves();   //makes moves for a single Turn
+    void EndTurn();     //indicates to the engine that it has made its moves
 };
 
 #endif //BOT_H_

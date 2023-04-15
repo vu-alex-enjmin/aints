@@ -31,20 +31,20 @@ struct State
     /*
         Variables
     */
-    int rows, cols,
-        turn, turns,
-        noPlayers;
-    double attackradius, spawnradius, viewradius;
-    double loadtime, turntime;
-    std::vector<double> scores;
-    bool gameover;
-    int64_t seed;
+    int Rows, Cols,
+        Turn, MaxTurns,
+        NoPlayers;
+    double AttackRadius, SpawnRadius, ViewRadius;
+    double LoadTime, TurnTime;
+    std::vector<double> Scores;
+    bool GameOver;
+    int64_t Seed;
 
-    std::vector<std::vector<Square> > grid;
-    std::vector<Location> myAnts, enemyAnts, myHills, enemyHills, food;
+    std::vector<std::vector<Square>> Grid;
+    std::vector<Location> MyAnts, EnemyAnts, MyHills, EnemyHills, Food;
 
-    Timer timer;
-    Bug bug;
+    Timer Timer;
+    Bug Bug;
 
     /*
         Functions
@@ -52,15 +52,15 @@ struct State
     State();
     ~State();
 
-    void setup();
-    void reset();
+    void Setup();
+    void Reset();
 
-    void makeMove(const Location &loc, int direction);
+    void MakeMove(const Location &loc, int direction);
 
-    double distance(const Location &loc1, const Location &loc2);
-    Location getLocation(const Location &startLoc, int direction);
+    double Distance(const Location &loc1, const Location &loc2);
+    Location GetLocation(const Location &startLoc, int direction);
 
-    void updateVisionInformation();
+    void UpdateVisionInformation();
 };
 
 std::ostream& operator<<(std::ostream &os, const State &state);
