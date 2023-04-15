@@ -1,6 +1,7 @@
 #ifndef BOT_H_
 #define BOT_H_
 
+#include <vector>
 #include "State.h"
 
 /*
@@ -9,7 +10,7 @@
 struct Bot
 {
     State State;
-    vector<Location> MovedAnts;
+    std::vector<Location> MovedAnts;
 
     Bot();
 

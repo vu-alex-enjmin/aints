@@ -39,7 +39,7 @@ void Bot::MakeMoves()
 
     for(int food = 0; food <(int)State.Food.size(); food++){
         antLocation = State.BreadthFirstSearch(State.Food[food],
-        &direction, (int)sqrt(State.ViewRadius),
+        &direction, (int)State.ViewRadius,
         [](const Square& square){
             return square.Ant == 0;
         });
