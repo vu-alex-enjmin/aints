@@ -61,7 +61,7 @@ struct State
     double Distance(const Location &loc1, const Location &loc2);
     double ManhattanDistance(const Location &loc1, const Location &loc2);
     Location GetLocation(const Location &startLoc, int direction);
-    Location BreadthFirstSearch(const Location &startLoc, char* outDirection, int range, function<bool(const Square&)> &evaluation);
+    Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Square&)> const &evaluation);
 
     void UpdateVisionInformation();
 };

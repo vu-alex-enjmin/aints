@@ -106,7 +106,7 @@ void State::UpdateVisionInformation()
     }
 }
 
-Location State::BreadthFirstSearch(const Location &startLoc, char* outDirection, int range, function<bool(const Square &)> &evaluation)
+Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Square &)> const &evaluation)
 {
     std::queue<Location> locQueue;
     Location currLoc, nextLoc;
@@ -134,7 +134,7 @@ Location State::BreadthFirstSearch(const Location &startLoc, char* outDirection,
                 if (evaluation(Grid[nextLoc.Row][nextLoc.Col]))
                 {
                     if(outDirection != nullptr){
-                        *outDirection = CDIRECTIONS[(d + TDIRECTIONS / 2) % TDIRECTIONS];
+                        *outDirection = (d + TDIRECTIONS / 2) % TDIRECTIONS;
                     }
                     return nextLoc;
                 }
