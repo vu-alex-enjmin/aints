@@ -11,6 +11,8 @@ struct Location
     Location();
 
     Location(int row, int col);
+
+    bool operator==(const Location &other) const;
 };
 
 #endif //LOCATION_H_
