@@ -10,6 +10,7 @@
 #include <queue>
 #include <stack>
 #include <stdint.h>
+#include <functional>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -60,6 +61,7 @@ struct State
     double Distance(const Location &loc1, const Location &loc2);
     double ManhattanDistance(const Location &loc1, const Location &loc2);
     Location GetLocation(const Location &startLoc, int direction);
+    Location BreadthFirstSearch(const Location &startLoc, char* outDirection, int range, function<bool(const Square&)> &evaluation);
 
     void UpdateVisionInformation();
 };
