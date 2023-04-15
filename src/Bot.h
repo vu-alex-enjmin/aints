@@ -9,6 +9,7 @@
 struct Bot
 {
     State State;
+    vector<Location> MovedAnts;
 
     Bot();
 

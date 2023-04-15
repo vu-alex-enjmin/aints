@@ -1,5 +1,5 @@
 #include "Bot.h"
-
+#include <algorithm>
 using namespace std;
 
 //constructor
@@ -31,17 +31,40 @@ void Bot::MakeMoves()
     State.Bug << "Turn " << State.Turn << ":" << endl;
     State.Bug << State << endl;
 
+    // Remove all moves
+    MovedAnts.clear();
+
+    int direction;
+    Location antLocation;
+
+    for(int food = 0; food <(int)State.Food.size(); food++){
+        antLocation = State.BreadthFirstSearch(State.Food[food],
+        &direction, (int)sqrt(State.ViewRadius),
+        [](const Square& square){
+            return square.Ant == 0;
+        });
+        if(!(antLocation == Location(-1,-1)) &&
+        std::find(MovedAnts.begin(), MovedAnts.end(), antLocation) == MovedAnts.end()){
+            State.MakeMove(antLocation, direction);
+            MovedAnts.push_back(antLocation);
+        }
+    }
+
     //picks out moves for each ant
     for(int ant=0; ant<(int)State.MyAnts.size(); ant++)
     {
-        for(int d=0; d<TDIRECTIONS; d++)
+        // Check if ant already moved
+        if(std::find(MovedAnts.begin(), MovedAnts.end(), State.MyAnts[ant]) == MovedAnts.end())
         {
-            Location loc = State.GetLocation(State.MyAnts[ant], d);
-
-            if(!State.Grid[loc.Row][loc.Col].IsWater)
+            for(int d=0; d<TDIRECTIONS; d++)
             {
-                State.MakeMove(State.MyAnts[ant], d);
-                break;
+                Location loc = State.GetLocation(State.MyAnts[ant], d);
+
+                if(!State.Grid[loc.Row][loc.Col].IsWater)
+                {
+                    State.MakeMove(State.MyAnts[ant], d);
+                    break;
+                }
             }
         }
     }
