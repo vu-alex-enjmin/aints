@@ -106,6 +106,17 @@ void State::UpdateVisionInformation()
     }
 }
 
+double State::ManhattanDistance(const Location &loc1, const Location &loc2)
+{
+    int rowDist = abs(loc1.Row-loc2.Row);
+    int colDist = abs(loc1.Col-loc2.Col);
+    // Evaluating distance both ways (since the map loops)
+    int bestRowDist = min(rowDist, Rows-rowDist);
+    int bestColDist = min(colDist, Cols-colDist);
+    
+    return bestRowDist + bestColDist;
+}
+
 /*
     This is the output function for a state. It will add a char map
     representation of the state to the output stream passed to it.
