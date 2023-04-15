@@ -22,10 +22,7 @@ struct Bug
 {
     std::ofstream File;
 
-    Bug()
-    {
-
-    }
+    Bug();
 
     // opens the specified file
     void Open(const std::string &filename);

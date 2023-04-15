@@ -6,7 +6,7 @@ using namespace std;
 Bot::Bot()
 {
 
-};
+}
 
 //plays a single game of Ants.
 void Bot::PlayGame()
@@ -23,7 +23,7 @@ void Bot::PlayGame()
         MakeMoves();
         EndTurn();
     }
-};
+}
 
 //makes the bots moves for the Turn
 void Bot::MakeMoves()
@@ -47,7 +47,7 @@ void Bot::MakeMoves()
     }
 
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
-};
+}
 
 //finishes the Turn
 void Bot::EndTurn()
@@ -57,4 +57,4 @@ void Bot::EndTurn()
     State.Turn++;
 
     cout << "go" << endl;
-};
+}

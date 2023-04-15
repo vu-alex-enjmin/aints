@@ -1,15 +1,21 @@
 #include "Square.h"
 
 Square::Square()
+    : IsVisible(false)
+    , IsWater(false)
+    , IsHill(false)
+    , IsFood(false)
+    , Ant(-1)
+    , HillPlayer(-1)
 {
-    IsVisible = IsWater = IsHill = IsFood = 0;
-    Ant = HillPlayer = -1;
+
 }
 
 void Square::Reset()
 {
-    IsVisible = 0;
-    IsHill = 0;
-    IsFood = 0;
-    Ant = HillPlayer = -1;
+    IsVisible = false;
+    IsHill = false;
+    IsFood = false;
+    Ant = -1;
+    HillPlayer = -1;
 }

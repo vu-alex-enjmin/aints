@@ -4,23 +4,23 @@ using namespace std;
 
 //constructor
 State::State()
+    : GameOver(false)
+    , Turn(0)
 {
-    GameOver = 0;
-    Turn = 0;
     Bug.Open("./debug.txt");
-};
+}
 
 //deconstructor
 State::~State()
 {
     Bug.Close();
-};
+}
 
 //sets the state up
 void State::Setup()
 {
     Grid = vector<vector<Square>>(Rows, vector<Square>(Cols, Square()));
-};
+}
 
 //resets all non-water squares to land and clears the bots ant vector
 void State::Reset()
@@ -34,7 +34,7 @@ void State::Reset()
         for(int col=0; col<Cols; col++)
             if(!Grid[row][col].IsWater)
                 Grid[row][col].Reset();
-};
+}
 
 //outputs move information to the engine
 void State::MakeMove(const Location &loc, int direction)
@@ -44,7 +44,7 @@ void State::MakeMove(const Location &loc, int direction)
     Location nLoc = GetLocation(loc, direction);
     Grid[nLoc.Row][nLoc.Col].Ant = Grid[loc.Row][loc.Col].Ant;
     Grid[loc.Row][loc.Col].Ant = -1;
-};
+}
 
 //returns the euclidean distance between two locations with the edges wrapped
 double State::Distance(const Location &loc1, const Location &loc2)
@@ -54,14 +54,14 @@ double State::Distance(const Location &loc1, const Location &loc2)
         dr = min(d1, Rows-d1),
         dc = min(d2, Cols-d2);
     return sqrt(dr*dr + dc*dc);
-};
+}
 
 //returns the new location from moving in a given direction with the edges wrapped
 Location State::GetLocation(const Location &loc, int direction)
 {
     return Location( (loc.Row + DIRECTIONS[direction][0] + Rows) % Rows,
                      (loc.Col + DIRECTIONS[direction][1] + Cols) % Cols );
-};
+}
 
 /*
     This function will update update the lastSeen value for any squares currently
@@ -104,7 +104,7 @@ void State::UpdateVisionInformation()
             }
         }
     }
-};
+}
 
 /*
     This is the output function for a state. It will add a char map
@@ -135,7 +135,7 @@ ostream& operator<<(ostream &os, const State &state)
     }
 
     return os;
-};
+}
 
 //input function
 istream& operator>>(istream &is, State &state)
@@ -263,4 +263,4 @@ istream& operator>>(istream &is, State &state)
     }
 
     return is;
-};
+}
