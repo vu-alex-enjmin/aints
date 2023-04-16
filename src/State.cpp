@@ -186,14 +186,14 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
         {
             nextLoc = GetLocation(currLoc, d);
 
-            if (distances[nextLoc.Row][nextLoc.Col] == -1 &&
-                !Grid[nextLoc.Row][nextLoc.Col].IsWater &&
-                !Grid[nextLoc.Row][nextLoc.Col].Ant.Team != -1 &&
-                nextDist <= range)
+            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
+                (!Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
+                (nextDist <= range))
             {
                 if (stopPredicate(nextLoc))
                 {
-                    if(outDirection != nullptr){
+                    if (outDirection != nullptr)
+                    {
                         *outDirection = (d + TDIRECTIONS / 2) % TDIRECTIONS;
                     }
                     return nextLoc;

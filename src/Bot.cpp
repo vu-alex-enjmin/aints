@@ -46,10 +46,10 @@ void Bot::MakeMoves()
             {
                 Location loc = State.GetLocation(State.MyAnts[ant], d);
 
-                if (!State.Grid[loc.Row][loc.Col].IsWater &&
-                    !State.Grid[loc.Row][loc.Col].Ant.Team != -1)
+                if ((!State.Grid[loc.Row][loc.Col].IsWater) &&
+                    (State.Grid[loc.Row][loc.Col].Ant.Team == -1))
                 {
-                    MakeMove(State.Grid[State.MyAnts[ant].Row][State.MyAnts[ant].Col].Ant , d);
+                    MakeMove(State.Grid[State.MyAnts[ant].Row][State.MyAnts[ant].Col].Ant, d);
                     break;
                 }
             }
@@ -105,11 +105,11 @@ void Bot::MakeMove(Ant& ant, int direction)
     cout << "o " << ant.CurrentLocation.Row << " " << ant.CurrentLocation.Col << " " << CDIRECTIONS[direction] << endl;
 
     Location nLoc = State.GetLocation(ant.CurrentLocation, direction);
-    
-    // Add destination Ant to Grid
-    State.Grid[nLoc.Col][nLoc.Row].Ant = ant;
 
     ant.NextLocation = nLoc;
     ant.Decided = true;
     ant.MoveDirection = direction;
+
+    // Add destination Ant to Grid
+    State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
 }
