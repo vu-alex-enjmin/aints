@@ -1,4 +1,7 @@
 #include "State.h"
+#include <limits>
+#include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -51,6 +54,72 @@ Location State::GetLocation(const Location &loc, int direction)
 {
     return Location( (loc.Row + DIRECTIONS[direction][0] + Rows) % Rows,
                      (loc.Col + DIRECTIONS[direction][1] + Cols) % Cols );
+}
+
+vector<int> State::AStar(const Location &startLoc, const Location &targetLoc)
+{
+    // Initialization of collections
+    //  actual distance to target
+    vector<vector<int>> distances(Rows, vector<int>(Cols, numeric_limits<int>::max()));
+    //  score (distance to target + heuristic)
+    vector<vector<int>> scores(Rows, vector<int>(Cols, numeric_limits<int>::max()));
+    //  directions taken to reach a given location (used to reconstruct the path)
+    vector<vector<int>> directions(Rows, vector<int>(Cols, -1));
+    auto comparator = [&](const Location a, const Location b)
+    {
+        return scores[a.Row][a.Col] > scores[b.Row][b.Col];
+    };
+    priority_queue<Location, vector<Location>, decltype(comparator)> locQueue(comparator);
+
+    // Prime algorithm
+    locQueue.push(startLoc);
+    scores[startLoc.Row][startLoc.Col] = 0;
+    distances[startLoc.Row][startLoc.Col] = 0;
+
+    // Search for path
+    Location currLoc, nextLoc;
+    int currLocDist, nextLocDist;
+    while (!locQueue.empty())
+    {
+        currLoc = locQueue.top();
+        // Compute path that was taken to reach target and return it
+        if (currLoc == targetLoc)
+        {
+            vector<int> pathDirections(distances[currLoc.Row][currLoc.Col]);
+
+            while (currLoc != startLoc)
+            {
+                pathDirections.push_back(directions[currLoc.Row][currLoc.Col]);
+                currLoc = GetLocation(currLoc, (directions[currLoc.Row][currLoc.Col] + TDIRECTIONS / 2) % TDIRECTIONS);
+            }
+            reverse(pathDirections.begin(), pathDirections.end());
+
+            return pathDirections;
+        }
+        
+        // Add/Update unvisited neighbours
+        locQueue.pop();
+        currLocDist = distances[currLoc.Row][currLoc.Col];
+        for (int d = 0; d < TDIRECTIONS; d++)
+        {
+            nextLoc = GetLocation(currLoc, d);
+            // If next location is water, skip it
+            if (Grid[nextLoc.Row][nextLoc.Col].IsWater)
+                continue;
+
+            nextLocDist = currLocDist + 1;
+            if (nextLocDist < distances[nextLoc.Row][nextLoc.Col])
+            {
+                directions[nextLoc.Row][nextLoc.Col] = d;
+                distances[nextLoc.Row][nextLoc.Col] = nextLocDist;
+                scores[nextLoc.Row][nextLoc.Col] = nextLocDist + ManhattanDistance(nextLoc, targetLoc);
+                locQueue.push(nextLoc);
+            }
+        }
+    }
+
+    // If no path is found, a path containing (-1) is returned
+    return vector<int>(1, -1);
 }
 
 /*
