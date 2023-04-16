@@ -1,7 +1,6 @@
 #ifndef BOT_H_
 #define BOT_H_
 
-#include <vector>
 #include "State.h"
 
 /*
@@ -10,20 +9,19 @@
 class Bot
 {
     public:
-    State State;
-    std::vector<Location> MovedAnts;
+        State State;
 
-    Bot();
+        Bot();
 
-    void PlayGame();    //plays a single game of Ants
-
-    void MakeMove(Ant& ant, int direction); // makes move for a single ant
-    void MakeMoves();   //makes moves for a single Turn
-
-    void EndTurn();     //indicates to the engine that it has made its moves
+        void PlayGame();    //plays a single game of Ants
+        void MakeMove(Ant& ant, int direction); // makes move for a single ant
+        void MakeMoves();   //makes moves for a single Turn
+        void EndTurn();     //indicates to the engine that it has made its moves
 
     private:
-    void SeekFood();
+        void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
+        void SeekFood();
+        void DestroyOtherHills();
 };
 
 #endif //BOT_H_
