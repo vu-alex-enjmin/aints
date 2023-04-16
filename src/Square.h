@@ -9,8 +9,8 @@
 */
 struct Square
 {
-    bool IsVisible, IsWater, IsHill, IsFood;
-    int HillPlayer;
+    bool IsWater, IsHill, IsFood;
+    int HillPlayer, TurnsInFog;
     Ant Ant;
 
     Square();

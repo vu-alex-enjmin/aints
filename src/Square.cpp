@@ -1,7 +1,7 @@
 #include "Square.h"
 
 Square::Square()
-    : IsVisible(false)
+    : TurnsInFog(1)
     , IsWater(false)
     , IsHill(false)
     , IsFood(false)
@@ -13,7 +13,7 @@ Square::Square()
 
 void Square::Reset()
 {
-    IsVisible = false;
+    TurnsInFog++;
     IsHill = false;
     IsFood = false;
     Ant.Decided = false;

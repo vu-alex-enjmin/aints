@@ -37,6 +37,7 @@ void Bot::MakeMoves()
     Combat();    
     DestroyOtherHills();
     SeekFood();
+    ExploreFog();
 
     //picks out moves for each ant
     for (Location &antLoc : State.MyAnts)
@@ -185,6 +186,25 @@ void Bot::EndTurn()
 }
 
 
+void Bot::ExploreFog()
+{
+    int direction;
+    Location destination;
+    for (Location &antLoc : State.MyAnts)
+    {
+        // Check if ant already moved
+        if (!State.Grid[antLoc.Row][antLoc.Col].Ant.Decided)
+        {
+            destination = State.SearchMostFogged(antLoc, &direction, ((int)State.ViewRadius)+5);
+            if (destination != Location(-1,-1))
+            {
+                MakeMove(State.Grid[antLoc.Row][antLoc.Col].Ant, direction);
+            }
+        }
+    }
+}
+
+
 // outputs move information to the engine
 // and registers move info in ant
 void Bot::MakeMove(Ant& ant, int direction)
@@ -198,5 +218,7 @@ void Bot::MakeMove(Ant& ant, int direction)
     ant.MoveDirection = direction;
 
     // Add destination Ant to Grid
-    State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.Decided = ant.Decided;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.Team = ant.Team;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.NextLocation = State.Grid[nLoc.Row][nLoc.Col].Ant.CurrentLocation;
 }

@@ -142,7 +142,7 @@ void State::UpdateVisionInformation()
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(Rows, std::vector<bool>(Cols, 0));
-        Grid[sLoc.Row][sLoc.Col].IsVisible = 1;
+        Grid[sLoc.Row][sLoc.Col].TurnsInFog = 0;
         visited[sLoc.Row][sLoc.Col] = 1;
 
         while(!locQueue.empty())
@@ -156,7 +156,7 @@ void State::UpdateVisionInformation()
 
                 if(!visited[nLoc.Row][nLoc.Col] && Distance(sLoc, nLoc) <= ViewRadius)
                 {
-                    Grid[nLoc.Row][nLoc.Col].IsVisible = 1;
+                    Grid[nLoc.Row][nLoc.Col].TurnsInFog = 0;
                     locQueue.push(nLoc);
                 }
                 visited[nLoc.Row][nLoc.Col] = 1;
@@ -239,6 +239,67 @@ void State::BreadthFirstSearchAll(const Location &startLoc, int range, function<
     }
 }
 
+Location State::SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange)
+{
+    Location currLoc, nextLoc, explLoc;
+    int currentScore;
+
+    int bestDirection;
+    int bestScore = 0;
+
+    int nextDist;
+    for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
+    {
+        currentScore = 0;
+        explLoc = GetLocation(startLoc, exploreDir);
+        if ((Grid[explLoc.Row][explLoc.Col].Ant.Team == -1) && 
+            (!Grid[explLoc.Row][explLoc.Col].IsWater))
+        {
+            std::queue<Location> locQueue;
+            locQueue.push(explLoc);
+            
+            std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
+            distances[explLoc.Row][explLoc.Col] = 0;
+
+            while (!locQueue.empty())
+            {
+                currLoc = locQueue.front();
+                locQueue.pop();
+                currentScore += Grid[currLoc.Row][currLoc.Col].TurnsInFog;
+                if(distances[currLoc.Row][currLoc.Col] < stopRange)
+                {
+                    nextDist = distances[currLoc.Row][currLoc.Col] + 1;
+                    for (int d = 0; d < TDIRECTIONS; d++)
+                    {
+                        nextLoc = GetLocation(currLoc, d);
+
+                        if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
+                            (!Grid[nextLoc.Row][nextLoc.Col].IsWater))
+                        {
+                            locQueue.push(nextLoc);
+                            distances[nextLoc.Row][nextLoc.Col] = nextDist;
+                        }
+                    }
+                }
+            }
+            if (currentScore >= bestScore)
+            {
+                bestDirection = exploreDir;
+                bestScore = currentScore;
+            }
+        }
+    }
+    if(bestScore == 0)
+    {
+        return Location(-1, -1);
+    }
+    else
+    {
+        *outDirection = bestDirection;
+        return GetLocation(startLoc, bestDirection);
+    }
+}
+
 double State::ManhattanDistance(const Location &loc1, const Location &loc2)
 {
     int rowDist = abs(loc1.Row-loc2.Row);
@@ -270,7 +331,7 @@ ostream& operator<<(ostream &os, const State &state)
                 os << (char)('A' + state.Grid[row][col].HillPlayer);
             else if(state.Grid[row][col].Ant.Team >= 0)
                 os << (char)('a' + state.Grid[row][col].Ant.Team);
-            else if(state.Grid[row][col].IsVisible)
+            else if(state.Grid[row][col].TurnsInFog == 0)
                 os << '.';
             else
                 os << '?';
