@@ -206,6 +206,62 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
     return Location(-1, -1);
 }
 
+Location State::ExploreFog(const Location &startLoc, int* outDirection, int stopRange)
+{
+    Location currLoc, nextLoc, explLoc;
+    int currentScore;
+
+    int bestDirection;
+    int bestScore = 0;
+
+    int nextDist;
+
+    for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
+    {
+        currentScore = 0;
+        explLoc = GetLocation(startLoc, exploreDir);
+        std::queue<Location> locQueue;
+        locQueue.push(explLoc);
+
+        std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
+        distances[explLoc.Row][explLoc.Col] = 0;
+
+        while (!locQueue.empty())
+        {
+            currLoc = locQueue.front();
+            locQueue.pop();
+            currentScore += Grid[currLoc.Row][currLoc.Col].TurnsInFog;
+            if(distances[currLoc.Row][currLoc.Col] < stopRange)
+            {
+                nextDist = distances[currLoc.Row][currLoc.Col] + 1;
+                for (int d = 0; d < TDIRECTIONS; d++)
+                {
+                    nextLoc = GetLocation(currLoc, d);
+
+                    if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
+                        (!Grid[nextLoc.Row][nextLoc.Col].IsWater))
+                    {
+                        locQueue.push(nextLoc);
+                    }
+                    distances[nextLoc.Row][nextLoc.Col] = nextDist;
+                }
+            }
+        }
+        if (currentScore >= bestScore)
+        {
+            bestDirection = exploreDir;
+            bestScore = currentScore;
+        }
+    }
+    if(bestScore == 0)
+        return Location(-1, -1);
+    else
+    {
+        *outDirection = bestDirection;
+        return GetLocation(startLoc, bestDirection);
+    }
+}
+
 double State::ManhattanDistance(const Location &loc1, const Location &loc2)
 {
     int rowDist = abs(loc1.Row-loc2.Row);
