@@ -188,6 +188,7 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
 
             if (distances[nextLoc.Row][nextLoc.Col] == -1 &&
                 !Grid[nextLoc.Row][nextLoc.Col].IsWater &&
+                !Grid[nextLoc.Row][nextLoc.Col].Ant.Team != -1 &&
                 nextDist <= range)
             {
                 if (stopPredicate(nextLoc))
