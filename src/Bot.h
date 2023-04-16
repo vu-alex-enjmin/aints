@@ -21,6 +21,7 @@ class Bot
     private:
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
         void SeekFood();
+        void ExploreFog();
         void DestroyOtherHills();
 };
 

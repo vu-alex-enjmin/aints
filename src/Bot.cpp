@@ -33,6 +33,7 @@ void Bot::MakeMoves()
 
     DestroyOtherHills();
     SeekFood();
+    ExploreFog();
 
     //picks out moves for each ant
     for (Location &antLoc : State.MyAnts)
@@ -104,6 +105,25 @@ void Bot::EndTurn()
     State.Turn++;
 
     cout << "go" << endl;
+}
+
+
+void Bot::ExploreFog()
+{
+    int direction;
+    Location destination;
+    for (Location &antLoc : State.MyAnts)
+    {
+        // Check if ant already moved
+        if (!State.Grid[antLoc.Row][antLoc.Col].Ant.Decided)
+        {
+            destination = State.SearchMostFogged(antLoc, &direction, ((int)State.ViewRadius)+5);
+            if (destination != Location(-1,-1))
+            {
+                MakeMove(State.Grid[antLoc.Row][antLoc.Col].Ant, direction);
+            }
+        }
+    }
 }
 
 
