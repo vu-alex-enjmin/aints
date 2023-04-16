@@ -31,25 +31,22 @@ void Bot::MakeMoves()
     State.Bug << "Turn " << State.Turn << ":" << endl;
     State.Bug << State << endl;
 
-    // Remove all moves
-    MovedAnts.clear();
-
     SeekFood();
 
     //picks out moves for each ant
-    for (int ant=0; ant<(int)State.MyAnts.size(); ant++)
+    for (Location &antLoc : State.MyAnts)
     {
         // Check if ant already moved
-        if (std::find(MovedAnts.begin(), MovedAnts.end(), State.MyAnts[ant]) == MovedAnts.end())
+        if (!State.Grid[antLoc.Row][antLoc.Col].Ant.Decided)
         {
             for (int d=0; d<TDIRECTIONS; d++)
             {
-                Location loc = State.GetLocation(State.MyAnts[ant], d);
+                Location loc = State.GetLocation(antLoc, d);
 
                 if ((!State.Grid[loc.Row][loc.Col].IsWater) &&
                     (State.Grid[loc.Row][loc.Col].Ant.Team == -1))
                 {
-                    MakeMove(State.Grid[State.MyAnts[ant].Row][State.MyAnts[ant].Col].Ant, d);
+                    MakeMove(State.Grid[antLoc.Row][antLoc.Col].Ant, d);
                     break;
                 }
             }
@@ -64,25 +61,23 @@ void Bot::SeekFood()
     int direction;
     Location antLocation;
 
-    for (int food = 0; food <(int)State.Food.size(); food++)
+    for (Location &foodLoc : State.Food)
     {
         antLocation = State.BreadthFirstSearch(
-            State.Food[food],
+            foodLoc,
             &direction, 
             (int)State.ViewRadius,
             [this](const Location& location)
             {
                 return 
                     (State.Grid[location.Row][location.Col].Ant.Team == 0) &&
-                    (!State.Grid[location.Row][location.Col].Ant.Decided) &&
-                    (std::find(MovedAnts.begin(), MovedAnts.end(), location) == MovedAnts.end());
+                    (!State.Grid[location.Row][location.Col].Ant.Decided);
             }
         );
         
         if (!(antLocation == Location(-1,-1)))
         {
             MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
-            MovedAnts.push_back(antLocation);
         }
     }
 }
