@@ -111,5 +111,7 @@ void Bot::MakeMove(Ant& ant, int direction)
     ant.MoveDirection = direction;
 
     // Add destination Ant to Grid
-    State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.Decided = ant.Decided;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.Team = ant.Team;
+    State.Grid[nLoc.Row][nLoc.Col].Ant.NextLocation = State.Grid[nLoc.Row][nLoc.Col].Ant.CurrentLocation;
 }
