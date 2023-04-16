@@ -17,7 +17,7 @@ void Bot::PlayGame()
     EndTurn();
 
     //continues making moves while the game is not over
-    while(cin >> State)
+    while (cin >> State)
     {
         State.UpdateVisionInformation();
         MakeMoves();
@@ -37,16 +37,16 @@ void Bot::MakeMoves()
     SeekFood();
 
     //picks out moves for each ant
-    for(int ant=0; ant<(int)State.MyAnts.size(); ant++)
+    for (int ant=0; ant<(int)State.MyAnts.size(); ant++)
     {
         // Check if ant already moved
-        if(std::find(MovedAnts.begin(), MovedAnts.end(), State.MyAnts[ant]) == MovedAnts.end())
+        if (std::find(MovedAnts.begin(), MovedAnts.end(), State.MyAnts[ant]) == MovedAnts.end())
         {
-            for(int d=0; d<TDIRECTIONS; d++)
+            for (int d=0; d<TDIRECTIONS; d++)
             {
                 Location loc = State.GetLocation(State.MyAnts[ant], d);
 
-                if(!State.Grid[loc.Row][loc.Col].IsWater)
+                if (!State.Grid[loc.Row][loc.Col].IsWater)
                 {
                     MakeMove(State.Grid[State.MyAnts[ant].Row][State.MyAnts[ant].Col].Ant , d);
                     break;
@@ -63,16 +63,21 @@ void Bot::SeekFood()
     int direction;
     Location antLocation;
 
-    for (int food = 0 ; food <(int)State.Food.size() ; food++)
+    for (int food = 0; food <(int)State.Food.size(); food++)
     {
-        antLocation = State.BreadthFirstSearch(State.Food[food],
-            &direction, (int)State.ViewRadius,
+        antLocation = State.BreadthFirstSearch(
+            State.Food[food],
+            &direction, 
+            (int)State.ViewRadius,
             [this](const Location& location)
             {
-                return State.Grid[location.Row][location.Col].Ant.Team == 0 &&
-                std::find(MovedAnts.begin(), MovedAnts.end(), location) == MovedAnts.end();
-            });
-        if(!(antLocation == Location(-1,-1)))
+                return 
+                    (State.Grid[location.Row][location.Col].Ant.Team == 0) &&
+                    (std::find(MovedAnts.begin(), MovedAnts.end(), location) == MovedAnts.end());
+            }
+        );
+        
+        if (!(antLocation == Location(-1,-1)))
         {
             MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
             MovedAnts.push_back(antLocation);
@@ -83,7 +88,7 @@ void Bot::SeekFood()
 //finishes the Turn
 void Bot::EndTurn()
 {
-    if(State.Turn > 0)
+    if (State.Turn > 0)
         State.Reset();
     State.Turn++;
 
