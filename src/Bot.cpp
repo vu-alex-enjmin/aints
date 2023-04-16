@@ -34,21 +34,7 @@ void Bot::MakeMoves()
     // Remove all moves
     MovedAnts.clear();
 
-    int direction;
-    Location antLocation;
-
-    for(int food = 0; food <(int)State.Food.size(); food++){
-        antLocation = State.BreadthFirstSearch(State.Food[food],
-        &direction, (int)State.ViewRadius,
-        [](const Square& square){
-            return square.Ant == 0;
-        });
-        if(!(antLocation == Location(-1,-1)) &&
-        std::find(MovedAnts.begin(), MovedAnts.end(), antLocation) == MovedAnts.end()){
-            State.MakeMove(antLocation, direction);
-            MovedAnts.push_back(antLocation);
-        }
-    }
+    SeekFood();
 
     //picks out moves for each ant
     for(int ant=0; ant<(int)State.MyAnts.size(); ant++)
@@ -62,7 +48,7 @@ void Bot::MakeMoves()
 
                 if(!State.Grid[loc.Row][loc.Col].IsWater)
                 {
-                    State.MakeMove(State.MyAnts[ant], d);
+                    MakeMove(State.Grid[State.MyAnts[ant].Row][State.MyAnts[ant].Col].Ant , d);
                     break;
                 }
             }
@@ -70,6 +56,28 @@ void Bot::MakeMoves()
     }
 
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
+}
+
+void Bot::SeekFood()
+{
+    int direction;
+    Location antLocation;
+
+    for (int food = 0 ; food <(int)State.Food.size() ; food++)
+    {
+        antLocation = State.BreadthFirstSearch(State.Food[food],
+            &direction, (int)State.ViewRadius,
+            [this](const Location& location)
+            {
+                return State.Grid[location.Row][location.Col].Ant.Team == 0 &&
+                std::find(MovedAnts.begin(), MovedAnts.end(), location) == MovedAnts.end();
+            });
+        if(!(antLocation == Location(-1,-1)))
+        {
+            MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
+            MovedAnts.push_back(antLocation);
+        }
+    }
 }
 
 //finishes the Turn
@@ -80,4 +88,18 @@ void Bot::EndTurn()
     State.Turn++;
 
     cout << "go" << endl;
+}
+
+
+// outputs move information to the engine
+// and registers move info in ant
+void Bot::MakeMove(Ant& ant, int direction)
+{
+    cout << "o " << ant.CurrentLocation.Row << " " << ant.CurrentLocation.Col << " " << CDIRECTIONS[direction] << endl;
+
+    Location nLoc = State.GetLocation(ant.CurrentLocation, direction);
+
+    ant.NextLocation = nLoc;
+    ant.Decided = true;
+    ant.MoveDirection = direction;
 }

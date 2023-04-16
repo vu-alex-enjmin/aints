@@ -7,8 +7,9 @@
 /*
     This struct represents your bot in the game of Ants
 */
-struct Bot
+class Bot
 {
+    public:
     State State;
     std::vector<Location> MovedAnts;
 
@@ -16,8 +17,13 @@ struct Bot
 
     void PlayGame();    //plays a single game of Ants
 
+    void MakeMove(Ant& ant, int direction); // makes move for a single ant
     void MakeMoves();   //makes moves for a single Turn
+
     void EndTurn();     //indicates to the engine that it has made its moves
+
+    private:
+    void SeekFood();
 };
 
 #endif //BOT_H_
