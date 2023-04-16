@@ -16,9 +16,11 @@ EXECUTABLE=$(EXE_DIR)MyBot
 all: $(OBJECTS) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
+	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
 $(OBJ_DIR)%.o : $(SRC_DIR)%.cpp
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean: 
