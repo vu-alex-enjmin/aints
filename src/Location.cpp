@@ -14,6 +14,12 @@ Location::Location(int row, int col)
 
 }
 
-bool Location::operator==(const Location &other) const {
-    return this->Col == other.Col && this->Row == other.Row;
+bool Location::operator==(const Location &other) const 
+{
+    return (this->Col == other.Col) && (this->Row == other.Row);
+}
+
+bool Location::operator!=(const Location &other) const 
+{
+    return (this->Col != other.Col) || (this->Row != other.Row);
 }
