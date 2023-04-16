@@ -31,6 +31,7 @@ void Bot::MakeMoves()
     State.Bug << "Turn " << State.Turn << ":" << endl;
     State.Bug << State << endl;
 
+    DestroyOtherHills();
     SeekFood();
 
     //picks out moves for each ant
@@ -56,29 +57,42 @@ void Bot::MakeMoves()
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
 }
 
-void Bot::SeekFood()
+void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const int searchRadius)
 {
     int direction;
     Location antLocation;
 
+    antLocation = State.BreadthFirstSearch(
+        targetLocation,
+        &direction, 
+        searchRadius,
+        [this](const Location& location)
+        {
+            return 
+                (State.Grid[location.Row][location.Col].Ant.Team == 0) &&
+                (!State.Grid[location.Row][location.Col].Ant.Decided);
+        }
+    );
+    
+    if (!(antLocation == Location(-1,-1)))
+    {
+        MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
+    }
+}
+
+void Bot::SeekFood()
+{
     for (Location &foodLoc : State.Food)
     {
-        antLocation = State.BreadthFirstSearch(
-            foodLoc,
-            &direction, 
-            (int)State.ViewRadius,
-            [this](const Location& location)
-            {
-                return 
-                    (State.Grid[location.Row][location.Col].Ant.Team == 0) &&
-                    (!State.Grid[location.Row][location.Col].Ant.Decided);
-            }
-        );
-        
-        if (!(antLocation == Location(-1,-1)))
-        {
-            MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
-        }
+        MoveClosestAvailableAntTowards(foodLoc, (int)State.ViewRadius);
+    }
+}
+
+void Bot::DestroyOtherHills()
+{
+    for (Location &hillLoc : State.EnemyHills)
+    {
+        MoveClosestAvailableAntTowards(hillLoc, (int)(2 * State.ViewRadius));
     }
 }
 

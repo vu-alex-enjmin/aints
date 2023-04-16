@@ -19,7 +19,9 @@ class Bot
         void EndTurn();     //indicates to the engine that it has made its moves
 
     private:
+        void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
         void SeekFood();
+        void DestroyOtherHills();
 };
 
 #endif //BOT_H_
