@@ -165,7 +165,7 @@ void State::UpdateVisionInformation()
     }
 }
 
-Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Location&)> const &stopPredicate)
+Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Location&)> const &stopPredicate, bool ignoreWater)
 {
     std::queue<Location> locQueue;
     Location currLoc, nextLoc;
@@ -187,7 +187,7 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
             nextLoc = GetLocation(currLoc, d);
 
             if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
-                (!Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
+                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
                 (nextDist <= range))
             {
                 if (stopPredicate(nextLoc))
@@ -203,7 +203,40 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
             distances[nextLoc.Row][nextLoc.Col] = nextDist;
         }
     }
+
     return Location(-1, -1);
+}
+
+void State::BreadthFirstSearchAll(const Location &startLoc, int range, function<void(const Location&)> const &onVisited, bool ignoreWater)
+{
+    std::queue<Location> locQueue;
+    locQueue.push(startLoc);
+
+    std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
+    distances[startLoc.Row][startLoc.Col] = 0;
+
+    Location currLoc, nextLoc;
+    int nextDist;
+    while (!locQueue.empty())
+    {
+        currLoc = locQueue.front();
+        locQueue.pop();
+        nextDist = distances[currLoc.Row][currLoc.Col] + 1;
+
+        for (int d = 0; d < TDIRECTIONS; d++)
+        {
+            nextLoc = GetLocation(currLoc, d);
+
+            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
+                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
+                (nextDist <= range))
+            {
+                onVisited(nextLoc);
+                locQueue.push(nextLoc);
+            }
+            distances[nextLoc.Row][nextLoc.Col] = nextDist;
+        }
+    }
 }
 
 double State::ManhattanDistance(const Location &loc1, const Location &loc2)

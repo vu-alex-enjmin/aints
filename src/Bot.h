@@ -22,6 +22,7 @@ class Bot
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
         void SeekFood();
         void DestroyOtherHills();
+        void Combat();
 };
 
 #endif //BOT_H_

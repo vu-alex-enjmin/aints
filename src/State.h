@@ -60,7 +60,8 @@ struct State
     double Distance(const Location &loc1, const Location &loc2);
     double ManhattanDistance(const Location &loc1, const Location &loc2);
     Location GetLocation(const Location &startLoc, int direction);
-    Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, std::function<bool(const Location&)> const &stopPredicate);
+    Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, std::function<bool(const Location&)> const &stopPredicate, bool ignoreWater = false);
+    void BreadthFirstSearchAll(const Location &startLoc, int range, std::function<void(const Location&)> const &onVisited, bool ignoreWater = false);
     // Returns the directions that need to be followed to reach target. 
     // Directions are int values: (0 for 'N', 1 for 'E', 2 for 'S', 3 for 'W')
     std::vector<int> AStar(const Location &startLoc, const Location &targetLoc);

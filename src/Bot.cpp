@@ -1,5 +1,8 @@
 #include "Bot.h"
+
+#include <unordered_set>
 #include <algorithm>
+
 using namespace std;
 
 //constructor
@@ -31,6 +34,7 @@ void Bot::MakeMoves()
     State.Bug << "Turn " << State.Turn << ":" << endl;
     State.Bug << State << endl;
 
+    Combat();    
     DestroyOtherHills();
     SeekFood();
 
@@ -94,6 +98,80 @@ void Bot::DestroyOtherHills()
     {
         MoveClosestAvailableAntTowards(hillLoc, (int)(2 * State.ViewRadius));
     }
+}
+
+void Bot::Combat()
+{
+    if (State.EnemyAnts.empty())
+        return;
+
+    // Initialize
+    vector<unordered_set<Location, Location>> allyGroups;
+    vector<unordered_set<Location, Location>> enemyGroups;
+    unordered_set<Location, Location> allyGroup;
+    auto onVisited = [&,this](const Location &location)
+    {
+        Square &visitedSquare = State.Grid[location.Row][location.Col];
+        if (visitedSquare.Ant.Team == 0 && !visitedSquare.Ant.Decided)
+        {
+            allyGroup.insert(location);
+        }
+    };
+    
+    // Search for enemy groups close to allies
+    for (const Location &antLoc : State.EnemyAnts)
+    {
+        allyGroup.clear();
+        State.BreadthFirstSearchAll(antLoc, State.AttackRadius + 2, onVisited, true);
+        
+        if (allyGroup.size() > 0)
+        {
+            unordered_set<Location, Location> allyGroupCopy = allyGroup;
+            allyGroups.push_back(allyGroupCopy);
+
+            unordered_set<Location, Location> enemyGroup;
+            enemyGroup.insert(antLoc);
+            enemyGroups.push_back(enemyGroup);
+        }
+    }
+
+    // Merge groups that are close to each-other to create "armies"
+    for (int i = 0; i < allyGroups.size(); i++)
+    {
+        bool merge = false;
+        for (int j = 0; j < allyGroups.size(); j++)
+        {
+            if (i == j)
+                continue;
+            
+            // Check whether a merge should be made
+            merge = false;
+            for (const Location &allyLoc : allyGroups[i])
+            {
+                if (allyGroups[j].count(allyLoc) > 0)
+                {
+                    merge = true;
+                    break;
+                }
+            }
+
+            // Merge if needed
+            if (merge)
+            {
+                allyGroups[i].insert(allyGroups[j].begin(), allyGroups[j].end());
+                allyGroups.erase(allyGroups.begin() + j);
+                enemyGroups[i].insert(enemyGroups[j].begin(), enemyGroups[j].end());
+                enemyGroups.erase(enemyGroups.begin() + j);
+
+                if (j < i)
+                    i--;
+                
+                j--;
+            }
+        }
+    }
+
+    // TODO : compute best combat strategy for each enemy/ally armies pair
 }
 
 //finishes the Turn
