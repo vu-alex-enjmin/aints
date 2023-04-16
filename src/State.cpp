@@ -142,7 +142,7 @@ void State::UpdateVisionInformation()
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(Rows, std::vector<bool>(Cols, 0));
-        Grid[sLoc.Row][sLoc.Col].IsVisible = 1;
+        Grid[sLoc.Row][sLoc.Col].TurnsInFog = 0;
         visited[sLoc.Row][sLoc.Col] = 1;
 
         while(!locQueue.empty())
@@ -156,7 +156,7 @@ void State::UpdateVisionInformation()
 
                 if(!visited[nLoc.Row][nLoc.Col] && Distance(sLoc, nLoc) <= ViewRadius)
                 {
-                    Grid[nLoc.Row][nLoc.Col].IsVisible = 1;
+                    Grid[nLoc.Row][nLoc.Col].TurnsInFog = 0;
                     locQueue.push(nLoc);
                 }
                 visited[nLoc.Row][nLoc.Col] = 1;
@@ -237,7 +237,7 @@ ostream& operator<<(ostream &os, const State &state)
                 os << (char)('A' + state.Grid[row][col].HillPlayer);
             else if(state.Grid[row][col].Ant.Team >= 0)
                 os << (char)('a' + state.Grid[row][col].Ant.Team);
-            else if(state.Grid[row][col].IsVisible)
+            else if(state.Grid[row][col].TurnsInFog == 0)
                 os << '.';
             else
                 os << '?';
