@@ -16,6 +16,7 @@
 #include "Bug.h"
 #include "Square.h"
 #include "Location.h"
+#include "Ant.h"
 
 /*
     constants
@@ -56,12 +57,10 @@ struct State
     void Setup();
     void Reset();
 
-    void MakeMove(const Location &loc, int direction);
-
     double Distance(const Location &loc1, const Location &loc2);
     double ManhattanDistance(const Location &loc1, const Location &loc2);
     Location GetLocation(const Location &startLoc, int direction);
-    Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, std::function<bool(const Square&)> const &evaluation);
+    Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, std::function<bool(const Location&)> const &stopPredicate);
 
     void UpdateVisionInformation();
 };

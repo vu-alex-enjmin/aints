@@ -36,16 +36,6 @@ void State::Reset()
                 Grid[row][col].Reset();
 }
 
-//outputs move information to the engine
-void State::MakeMove(const Location &loc, int direction)
-{
-    cout << "o " << loc.Row << " " << loc.Col << " " << CDIRECTIONS[direction] << endl;
-
-    Location nLoc = GetLocation(loc, direction);
-    Grid[nLoc.Row][nLoc.Col].Ant = Grid[loc.Row][loc.Col].Ant;
-    Grid[loc.Row][loc.Col].Ant = -1;
-}
-
 //returns the euclidean distance between two locations with the edges wrapped
 double State::Distance(const Location &loc1, const Location &loc2)
 {
@@ -106,7 +96,7 @@ void State::UpdateVisionInformation()
     }
 }
 
-Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Square &)> const &evaluation)
+Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Location&)> const &stopPredicate)
 {
     std::queue<Location> locQueue;
     Location currLoc, nextLoc;
@@ -131,7 +121,7 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
                 !Grid[nextLoc.Row][nextLoc.Col].IsWater &&
                 nextDist <= range)
             {
-                if (evaluation(Grid[nextLoc.Row][nextLoc.Col]))
+                if (stopPredicate(nextLoc))
                 {
                     if(outDirection != nullptr){
                         *outDirection = (d + TDIRECTIONS / 2) % TDIRECTIONS;
@@ -175,8 +165,8 @@ ostream& operator<<(ostream &os, const State &state)
                 os << '*';
             else if(state.Grid[row][col].IsHill)
                 os << (char)('A' + state.Grid[row][col].HillPlayer);
-            else if(state.Grid[row][col].Ant >= 0)
-                os << (char)('a' + state.Grid[row][col].Ant);
+            else if(state.Grid[row][col].Ant.Team >= 0)
+                os << (char)('a' + state.Grid[row][col].Ant.Team);
             else if(state.Grid[row][col].IsVisible)
                 os << '.';
             else
@@ -271,7 +261,7 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "a") //live ant square
             {
                 is >> row >> col >> player;
-                state.Grid[row][col].Ant = player;
+                state.Grid[row][col].Ant = Ant(player, Location(row, col));
                 if(player == 0)
                     state.MyAnts.push_back(Location(row, col));
                 else
