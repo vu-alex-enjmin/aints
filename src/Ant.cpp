@@ -6,5 +6,7 @@ Ant::Ant(int team, Location location)
     , MoveDirection(-1)
     , NextLocation(-1, -1)
 {
-    
+    static int currentId = 0;
+    Id = currentId;
+    currentId ++;
 }

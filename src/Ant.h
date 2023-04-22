@@ -4,6 +4,7 @@
 struct Ant
 {
     int Team;
+    int Id;
     Location CurrentLocation;
     // current turn's definitive direction (no overwrite possible once decision is taken)
     bool Decided;
