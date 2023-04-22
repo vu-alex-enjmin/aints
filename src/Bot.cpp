@@ -191,7 +191,69 @@ void Bot::Combat()
         }
     }
 
-    // TODO : compute best combat strategy for each enemy/ally armies pair
+    // Compute life/death state for all opposing armies
+    for (int i = 0; i < allyGroups.size(); i++)
+    {
+        unordered_set<Location, Location> movedAllyGroup = allyGroups[i];
+        unordered_set<Location, Location> movedEnemyGroup = enemyGroups[i];
+
+        // Initialize opponent count for allies and enemies
+        for (const auto &ally : allyGroups[i]) 
+        {
+            State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount = 0;
+        }
+        for (const auto &enemy : enemyGroups[i]) 
+        {
+            State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount = 0;
+        }
+
+        // Compute opponent count for allies and enemies
+        for (const auto &ally : allyGroups[i]) 
+        {
+            for (const auto &enemy : enemyGroups[i]) 
+            {
+                if (State.Distance2(ally, enemy) > State.AttackRadius2)
+                    continue;
+                
+                State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount++;
+                State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount++;
+            }
+        }
+
+        // Compute how many ally ant will die
+        int allyDeathCount = 0;
+        for (const auto &ally : allyGroups[i]) 
+        {
+            for (const auto &enemy : enemyGroups[i]) 
+            {
+                if (State.Distance2(ally, enemy) > State.AttackRadius2)
+                    continue;
+                
+                if (State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount >= State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount)
+                {
+                    allyDeathCount++;
+                    break;
+                }
+            }
+        }
+
+        // Compute how many enemy ant will die
+        int enemyDeathCount = 0;
+        for (const auto &enemy : enemyGroups[i]) 
+        {
+            for (const auto &ally : allyGroups[i]) 
+            {
+                if (State.Distance2(enemy, ally) > State.AttackRadius2)
+                    continue;
+                
+                if (State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount >= State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount)
+                {
+                    enemyDeathCount++;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 //finishes the Turn

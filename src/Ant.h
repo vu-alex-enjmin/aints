@@ -10,6 +10,8 @@ struct Ant
     bool Decided;
     int MoveDirection;
     Location NextLocation;
+    // Combat/Defense properties
+    int SurroundingOpponentCount;
 
     Ant(int team, Location location);
 };
