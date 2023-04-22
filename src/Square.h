@@ -2,6 +2,7 @@
 #define SQUARE_H_
 
 #include <vector>
+
 #include "Ant.h"
 
 /*
@@ -14,8 +15,8 @@ struct Square
     Ant* Ant;
 
     Square();
-    //resets the information for the square except water information
+    // Resets the information for the square except water information
     void Reset();
 };
 
-#endif //SQUARE_H_
+#endif // SQUARE_H_

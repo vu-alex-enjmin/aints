@@ -24,7 +24,7 @@
 */
 const int TDIRECTIONS = 4;
 const char CDIRECTIONS[4] = {'N', 'E', 'S', 'W'};
-const int DIRECTIONS[4][2] = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };      //{N, E, S, W}
+const int DIRECTIONS[4][2] = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // {N, E, S, W}
 
 /*
     struct to store current state information
@@ -44,7 +44,7 @@ struct State
     bool GameOver;
     int64_t Seed;
 
-    std::map<int, Ant*> MyIndexedAnts;
+    std::map<int, Ant*> AllyAnts;
     std::vector<std::vector<Square>> Grid;
     std::vector<Location> EnemyAnts, MyHills, EnemyHills, Food;
 
@@ -76,4 +76,4 @@ struct State
 std::ostream& operator<<(std::ostream &os, const State &state);
 std::istream& operator>>(std::istream &is, State &state);
 
-#endif //STATE_H_
+#endif // STATE_H_

@@ -1,6 +1,8 @@
-#ifndef ANT_H
-#define ANT_H
+#ifndef ANT_H_
+#define ANT_H_
+
 #include "Location.h"
+
 struct Ant
 {
     int Team;
@@ -16,4 +18,4 @@ struct Ant
     Ant(int team, Location location);
 };
 
-#endif // ANT_H
+#endif // ANT_H_

@@ -1,4 +1,5 @@
 #include "Ant.h"
+
 Ant::Ant(int team, Location location)
     : Team(team)
     , CurrentLocation(location)

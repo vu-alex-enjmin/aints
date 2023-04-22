@@ -6,7 +6,7 @@
 
 using namespace std;
 
-//constructor
+// Constructor
 State::State()
     : GameOver(false)
     , Turn(0)
@@ -14,19 +14,19 @@ State::State()
     Bug.Open("./debug.txt");
 }
 
-//deconstructor
+// Deconstructor
 State::~State()
 {
     Bug.Close();
 }
 
-//sets the state up
+// Sets the state up
 void State::Setup()
 {
     Grid = vector<vector<Square>>(Rows, vector<Square>(Cols, Square()));
 }
 
-//resets all non-water squares to land and clears the bots ant vector
+// Resets all non-water squares to land and clears the bots ant vector
 void State::Reset()
 {
     for (const Location &enemyLoc : EnemyAnts)
@@ -38,16 +38,15 @@ void State::Reset()
     MyHills.clear();
     EnemyHills.clear();
     Food.clear();
-    for(int row=0; row<Rows; row++)
-        for(int col=0; col<Cols; col++)
+    for(int row = 0; row < Rows; row++)
+        for(int col = 0; col < Cols; col++)
             if(!Grid[row][col].IsWater)
                 Grid[row][col].Reset();
     Ant* ant;
-    for (const auto antPair : MyIndexedAnts)
+    for (const auto &antPair : AllyAnts)
     {
         ant = antPair.second;
         Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
-
         // Apply move to ant for next turn
         if(ant->Decided)
         {
@@ -55,20 +54,20 @@ void State::Reset()
             ant->Decided = false;
             ant->NextLocation = Location(-1,-1);
             ant->MoveDirection = -1;
-            Bug << "Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
+            Bug << "   Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
         }
         Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
         Bug << "Reset Done " << ant->Id << endl; 
     }
 }
 
-//returns the euclidean distance between two locations with the edges wrapped
+// Returns the euclidean distance between two locations with the edges wrapped
 double State::Distance(const Location &loc1, const Location &loc2)
 {
     return sqrt(Distance2(loc1, loc2));
 }
 
-// returns the euclidean square distance between two locations with the edges wrapped
+// Returns the euclidean square distance between two locations with the edges wrapped
 int State::Distance2(const Location &loc1, const Location &loc2)
 {
     int d1 = abs(loc1.Row-loc2.Row),
@@ -78,7 +77,7 @@ int State::Distance2(const Location &loc1, const Location &loc2)
     return dr*dr + dc*dc;
 }
 
-//returns the new location from moving in a given direction with the edges wrapped
+// Returns the new location from moving in a given direction with the edges wrapped
 Location State::GetLocation(const Location &loc, int direction)
 {
     return Location( (loc.Row + DIRECTIONS[direction][0] + Rows) % Rows,
@@ -100,7 +99,7 @@ vector<int> State::AStar(const Location &startLoc, const Location &targetLoc)
     };
     priority_queue<Location, vector<Location>, decltype(comparator)> locQueue(comparator);
 
-    // Prime algorithm
+    // Prime the algorithm
     locQueue.push(startLoc);
     scores[startLoc.Row][startLoc.Col] = 0;
     distances[startLoc.Row][startLoc.Col] = 0;
@@ -166,7 +165,7 @@ void State::UpdateVisionInformation()
     Location startLoc, currentLoc, nextLoc;
 
     Ant* ant;
-    for (const auto antPair : MyIndexedAnts)
+    for (const auto &antPair : AllyAnts)
     {
         ant = antPair.second;
         startLoc = ant->CurrentLocation;
@@ -177,12 +176,12 @@ void State::UpdateVisionInformation()
         Grid[startLoc.Row][startLoc.Col].TurnsInFog = 0;
         visited[startLoc.Row][startLoc.Col] = 1;
 
-        while(!locQueue.empty())
+        while (!locQueue.empty())
         {
             currentLoc = locQueue.front();
             locQueue.pop();
 
-            for(int d=0; d<TDIRECTIONS; d++)
+            for (int d = 0; d < TDIRECTIONS; d++)
             {
                 nextLoc = GetLocation(currentLoc, d);
 
@@ -351,19 +350,19 @@ double State::ManhattanDistance(const Location &loc1, const Location &loc2)
 */
 ostream& operator<<(ostream &os, const State &state)
 {
-    for(int row=0; row<state.Rows; row++)
+    for (int row = 0; row < state.Rows; row++)
     {
-        for(int col=0; col<state.Cols; col++)
+        for (int col = 0; col < state.Cols; col++)
         {
-            if(state.Grid[row][col].IsWater)
+            if (state.Grid[row][col].IsWater)
                 os << '%';
-            else if(state.Grid[row][col].IsFood)
+            else if (state.Grid[row][col].IsFood)
                 os << '*';
-            else if(state.Grid[row][col].IsHill)
+            else if (state.Grid[row][col].IsHill)
                 os << (char)('A' + state.Grid[row][col].HillPlayer);
-            else if(state.Grid[row][col].Ant != nullptr)
+            else if (state.Grid[row][col].Ant != nullptr)
                 os << (char)('a' + state.Grid[row][col].Ant->Team);
-            else if(state.Grid[row][col].TurnsInFog == 0)
+            else if (state.Grid[row][col].TurnsInFog == 0)
                 os << '.';
             else
                 os << '?';
@@ -374,101 +373,101 @@ ostream& operator<<(ostream &os, const State &state)
     return os;
 }
 
-//input function
+// Input function
 istream& operator>>(istream &is, State &state)
 {
     int row, col, player;
     string inputType, junk;
     Ant* ant;
 
-    //finds out which turn it is
-    while(is >> inputType)
+    // Finds out which turn it is
+    while (is >> inputType)
     {
-        if(inputType == "end")
+        if (inputType == "end")
         {
             state.GameOver = 1;
             break;
         }
-        else if(inputType == "turn")
+        else if (inputType == "turn")
         {
             is >> state.Turn;
             break;
         }
-        else //unknown line
+        else // Unknown line
             getline(is, junk);
     }
 
-    if(state.Turn == 0)
+    if (state.Turn == 0)
     {
-        //reads game parameters
-        while(is >> inputType)
+        // Reads game parameters
+        while (is >> inputType)
         {
-            if(inputType == "loadtime")
+            if (inputType == "loadtime")
                 is >> state.LoadTime;
-            else if(inputType == "turntime")
+            else if (inputType == "turntime")
                 is >> state.TurnTime;
-            else if(inputType == "rows")
+            else if (inputType == "rows")
                 is >> state.Rows;
-            else if(inputType == "cols")
+            else if (inputType == "cols")
                 is >> state.Cols;
-            else if(inputType == "turns")
+            else if (inputType == "turns")
                 is >> state.MaxTurns;
-            else if(inputType == "player_seed")
+            else if (inputType == "player_seed")
                 is >> state.Seed;
-            else if(inputType == "viewradius2")
+            else if (inputType == "viewradius2")
             {
                 is >> state.ViewRadius2;
                 state.ViewRadius = sqrt(state.ViewRadius2);
             }
-            else if(inputType == "attackradius2")
+            else if (inputType == "attackradius2")
             {
                 is >> state.AttackRadius2;
                 state.AttackRadius = sqrt(state.AttackRadius2);
             }
-            else if(inputType == "spawnradius2")
+            else if (inputType == "spawnradius2")
             {
                 is >> state.SpawnRadius2;
                 state.SpawnRadius = sqrt(state.SpawnRadius2);
             }
-            else if(inputType == "ready") //end of parameter input
+            else if (inputType == "ready") // End of parameter input
             {
                 state.Timer.Start();
                 break;
             }
-            else    //unknown line
+            else    // Unknown line
                 getline(is, junk);
         }
     }
     else
     {
-        //reads information about the current Turn
-        while(is >> inputType)
+        // Reads information about the current Turn
+        while (is >> inputType)
         {
             // state.Bug << inputType << endl;
-            if(inputType == "w") //water square
+            if (inputType == "w") // Water square
             {
                 is >> row >> col;
                 state.Grid[row][col].IsWater = 1;
             }
-            else if(inputType == "f") //food square
+            else if (inputType == "f") // Food square
             {
                 is >> row >> col;
                 state.Grid[row][col].IsFood = 1;
                 state.Food.push_back(Location(row, col));
             }
-            else if(inputType == "a") //live ant square
+            else if (inputType == "a") // Live ant square
             {
                 is >> row >> col >> player;
                 if (state.Grid[row][col].Ant == nullptr) // new ant
                 {
                     ant = new Ant(player, Location(row, col));
-                    state.Bug << "Ant added" << ant->Id <<" - (" << ant->Team << ") "<< row <<"/"<< col << endl;
+                    state.Bug << "Ant added" << ant->Id << " - (" << ant->Team << ") "<< row << "/"<< col << endl;
                     state.Grid[row][col].Ant = ant;
                     
-                    if(player == 0)
+                    if (player == 0)
                     {
                         
-                        state.MyIndexedAnts[ant->Id] = ant;
+                        state.AllyAnts[ant->Id] = ant;
                     }
                     else
                     {
@@ -477,7 +476,7 @@ istream& operator>>(istream &is, State &state)
                 }
             }
 
-            else if(inputType == "d") //dead ant square
+            else if (inputType == "d") // Dead ant square
             {
                 is >> row >> col >> player;
                 if ((player == 0) &&
@@ -490,12 +489,13 @@ istream& operator>>(istream &is, State &state)
                         state.Grid[row][col].Ant->Id << " "
                         << row << "/" << col << endl;
 
-                        ant = state.MyIndexedAnts.at( state.Grid[row][col].Ant->Id );
-                        state.MyIndexedAnts.erase(ant->Id);
+                        ant = state.AllyAnts.at( state.Grid[row][col].Ant->Id );
+                        state.AllyAnts.erase(ant->Id);
                         delete ant;
                         
                     }
-                    catch ( const exception & e ) {
+                    catch (const exception & e) 
+                    {
                         state.Bug << "Dead "<< e.what() << ": ID - "<<
                         state.Grid[row][col].Ant->Id << " "
                         << row << "/" << col << endl;
@@ -504,34 +504,34 @@ istream& operator>>(istream &is, State &state)
                     state.Grid[row][col].Ant = nullptr;
                 }
             }
-            else if(inputType == "h")
+            else if (inputType == "h")
             {
                 is >> row >> col >> player;
                 state.Grid[row][col].IsHill = 1;
                 state.Grid[row][col].HillPlayer = player;
-                if(player == 0)
+                if (player == 0)
                     state.MyHills.push_back(Location(row, col));
                 else
                     state.EnemyHills.push_back(Location(row, col));
 
             }
-            else if(inputType == "players") //player information
+            else if (inputType == "players") // Player information
                 is >> state.NoPlayers;
-            else if(inputType == "scores") //score information
+            else if (inputType == "scores") // Score information
             {
                 state.Scores = vector<double>(state.NoPlayers, 0.0);
-                for(int p=0; p<state.NoPlayers; p++)
+                for(int p = 0; p < state.NoPlayers; p++)
                     is >> state.Scores[p];
             }
-            else if(inputType == "go") //end of Turn input
+            else if (inputType == "go") // End of Turn input
             {
-                if(state.GameOver)
+                if (state.GameOver)
                     is.setstate(std::ios::failbit);
                 else
                     state.Timer.Start();
                 break;
             }
-            else //unknown line
+            else // Unknown line
                 getline(is, junk);
         }
     }

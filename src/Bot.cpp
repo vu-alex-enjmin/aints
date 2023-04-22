@@ -6,23 +6,23 @@
 
 using namespace std;
 
-//constructor
+// Constructor
 Bot::Bot()
 {
 
 }
 
-//plays a single game of Ants.
+// Plays a single game of Ants.
 void Bot::PlayGame()
 {
-    //reads the game parameters and sets up
+    // Reads the game parameters and sets up
     cin >> State;
     State.Setup();
     EndTurn();
 
     srand(State.Seed);
 
-    //continues making moves while the game is not over
+    // Continues making moves while the game is not over
     while (cin >> State)
     {
         State.UpdateVisionInformation();
@@ -31,7 +31,7 @@ void Bot::PlayGame()
     }
 }
 
-//makes the bots moves for the Turn
+// Makes the bots moves for the Turn
 void Bot::MakeMoves()
 {
     State.Bug << "Turn " << State.Turn << ":" << endl;
@@ -49,15 +49,15 @@ void Bot::MakeMoves()
     int direction;
 
     Ant* ant;
-    //picks out moves for each ant
-    for (const auto antPair : State.MyIndexedAnts)
+    // Picks out moves for each ant
+    for (const auto &antPair : State.AllyAnts)
     {
         ant = antPair.second;
         // Check if ant already moved
         if (!ant->Decided)
         {
             offset = rand();
-            for (int d=0; d<TDIRECTIONS; d++)
+            for (int d = 0; d < TDIRECTIONS; d++)
             {
                 direction = ( d + offset ) % TDIRECTIONS;
                 Location destination = State.GetLocation(ant->CurrentLocation, direction);
@@ -97,14 +97,14 @@ void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const i
     if (!(antLocation == Location(-1,-1)))
     {
         Location newLocation = State.GetLocation(antLocation, direction);
-        if(State.Grid[newLocation.Row][newLocation.Col].Ant == nullptr)
+        if (State.Grid[newLocation.Row][newLocation.Col].Ant == nullptr)
             MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
     }
 }
 
 void Bot::SeekFood()
 {
-    for (Location &foodLoc : State.Food)
+    for (const Location &foodLoc : State.Food)
     {
         MoveClosestAvailableAntTowards(foodLoc, (int)State.ViewRadius);
     }
@@ -112,7 +112,7 @@ void Bot::SeekFood()
 
 void Bot::DestroyOtherHills()
 {
-    for (Location &hillLoc : State.EnemyHills)
+    for (const Location &hillLoc : State.EnemyHills)
     {
         MoveClosestAvailableAntTowards(hillLoc, (int)(2 * State.ViewRadius));
     }
@@ -256,7 +256,7 @@ void Bot::Combat()
     }
 }
 
-//finishes the Turn
+// Finishes the Turn
 void Bot::EndTurn()
 {
     if (State.Turn > 0)
@@ -273,14 +273,14 @@ void Bot::ExploreFog()
     Location destination;
     
     Ant* ant;
-    //picks out moves for each ant
-    for (const auto antPair : State.MyIndexedAnts)
+    // Picks out moves for each ant
+    for (const auto &antPair : State.AllyAnts)
     {
         ant = antPair.second;
         // Check if ant already moved
         if (!ant->Decided)
         {
-            State.Bug << "Enter SearchMostFogged"<<endl;
+            State.Bug << "Enter SearchMostFogged" << endl;
 
             destination = State.SearchMostFogged(ant->CurrentLocation, &direction, ((int)State.ViewRadius)+5);
             if (destination != Location(-1,-1))
@@ -288,12 +288,13 @@ void Bot::ExploreFog()
                 MakeMove(ant, direction);
             }
 
-            State.Bug << "Exit SearchMostFogged"<<endl;
-        }else{
-            State.Bug << "Ant ("<< ant->Id<<") at " << ant->CurrentLocation.Row <<
-                "/" << ant->CurrentLocation.Col << "already decided" <<endl;
+            State.Bug << "Exit SearchMostFogged" << endl;
         }
-        
+        else
+        {
+            State.Bug << "Ant (" << ant->Id<< ") at " << ant->CurrentLocation.Row <<
+                "/" << ant->CurrentLocation.Col << "already decided" << endl;
+        }
     }
 }
 
@@ -302,7 +303,7 @@ void Bot::ExploreFog()
 void Bot::MakeMove(Ant* ant, int direction)
 {
     Location nLoc = State.GetLocation(ant->CurrentLocation, direction);
-    if(State.Grid[nLoc.Row][nLoc.Col].IsFood)
+    if (State.Grid[nLoc.Row][nLoc.Col].IsFood)
     {
         // Do not move if going towards food (food has collisions)
         ant->Decided = true;

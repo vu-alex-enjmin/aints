@@ -20,4 +20,4 @@ struct Location
     size_t operator()(const Location &toHash) const noexcept;
 };
 
-#endif //LOCATION_H_
+#endif // LOCATION_H_

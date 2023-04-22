@@ -13,10 +13,10 @@ class Bot
 
         Bot();
 
-        void PlayGame();    //plays a single game of Ants
-        void MakeMove(Ant* ant, int direction); // makes move for a single ant
-        void MakeMoves();   //makes moves for a single Turn
-        void EndTurn();     //indicates to the engine that it has made its moves
+        void PlayGame();    // Plays a single game of Ants
+        void MakeMove(Ant* ant, int direction); // Makes move for a single ant
+        void MakeMoves();   // Makes moves for a single Turn
+        void EndTurn();     // Indicates to the engine that it has made its moves
 
     private:
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
@@ -26,4 +26,4 @@ class Bot
         void Combat();
 };
 
-#endif //BOT_H_
+#endif // BOT_H_
