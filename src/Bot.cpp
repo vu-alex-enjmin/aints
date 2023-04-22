@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 #include <algorithm>
+#include <cstdlib>
 
 using namespace std;
 
@@ -19,6 +20,8 @@ void Bot::PlayGame()
     State.Setup();
     EndTurn();
 
+    srand(State.Seed);
+
     //continues making moves while the game is not over
     while (cin >> State)
     {
@@ -33,26 +36,37 @@ void Bot::MakeMoves()
 {
     State.Bug << "Turn " << State.Turn << ":" << endl;
     State.Bug << State << endl;
-
-    Combat();    
+    State.Bug << "Combat" << endl;
+    Combat();   
+    State.Bug << "DestroyOtherHills" << endl; 
     DestroyOtherHills();
+    State.Bug << "SeekFood" << endl;
     SeekFood();
+    State.Bug << "ExploreFog" << endl;
     ExploreFog();
+    State.Bug << "FinalMove" << endl;
+    int offset;
+    int direction;
 
+    Ant* ant;
     //picks out moves for each ant
-    for (Location &antLoc : State.MyAnts)
+    for (const auto antPair : State.MyIndexedAnts)
     {
+        ant = antPair.second;
         // Check if ant already moved
-        if (!State.Grid[antLoc.Row][antLoc.Col].Ant.Decided)
+        if (!ant->Decided)
         {
+            offset = rand();
             for (int d=0; d<TDIRECTIONS; d++)
             {
-                Location loc = State.GetLocation(antLoc, d);
+                direction = ( d + offset ) % TDIRECTIONS;
+                Location destination = State.GetLocation(ant->CurrentLocation, direction);
 
-                if ((!State.Grid[loc.Row][loc.Col].IsWater) &&
-                    (State.Grid[loc.Row][loc.Col].Ant.Team == -1))
+                if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
+                    (State.Grid[destination.Row][destination.Col].Ant == nullptr) &&
+                    (State.Grid[destination.Row][destination.Col].HillPlayer != 0))
                 {
-                    MakeMove(State.Grid[antLoc.Row][antLoc.Col].Ant, d);
+                    MakeMove(ant, direction);
                     break;
                 }
             }
@@ -74,14 +88,17 @@ void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const i
         [this](const Location& location)
         {
             return 
-                (State.Grid[location.Row][location.Col].Ant.Team == 0) &&
-                (!State.Grid[location.Row][location.Col].Ant.Decided);
+                (State.Grid[location.Row][location.Col].Ant != nullptr) &&
+                (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
+                (!State.Grid[location.Row][location.Col].Ant->Decided);
         }
     );
     
     if (!(antLocation == Location(-1,-1)))
     {
-        MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
+        Location newLocation = State.GetLocation(antLocation, direction);
+        if(State.Grid[newLocation.Row][newLocation.Col].Ant == nullptr)
+            MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
     }
 }
 
@@ -113,7 +130,9 @@ void Bot::Combat()
     auto onVisited = [&,this](const Location &location)
     {
         Square &visitedSquare = State.Grid[location.Row][location.Col];
-        if (visitedSquare.Ant.Team == 0 && !visitedSquare.Ant.Decided)
+        if (visitedSquare.Ant != nullptr &&
+            visitedSquare.Ant->Team == 0 &&
+            !visitedSquare.Ant->Decided)
         {
             allyGroup.insert(location);
         }
@@ -190,35 +209,51 @@ void Bot::ExploreFog()
 {
     int direction;
     Location destination;
-    for (Location &antLoc : State.MyAnts)
+    
+    Ant* ant;
+    //picks out moves for each ant
+    for (const auto antPair : State.MyIndexedAnts)
     {
+        ant = antPair.second;
         // Check if ant already moved
-        if (!State.Grid[antLoc.Row][antLoc.Col].Ant.Decided)
+        if (!ant->Decided)
         {
-            destination = State.SearchMostFogged(antLoc, &direction, ((int)State.ViewRadius)+5);
+            State.Bug << "Enter SearchMostFogged"<<endl;
+
+            destination = State.SearchMostFogged(ant->CurrentLocation, &direction, ((int)State.ViewRadius)+5);
             if (destination != Location(-1,-1))
             {
-                MakeMove(State.Grid[antLoc.Row][antLoc.Col].Ant, direction);
+                MakeMove(ant, direction);
             }
+
+            State.Bug << "Exit SearchMostFogged"<<endl;
+        }else{
+            State.Bug << "Ant ("<< ant->Id<<") at " << ant->CurrentLocation.Row <<
+                "/" << ant->CurrentLocation.Col << "already decided" <<endl;
         }
+        
     }
 }
 
-
 // outputs move information to the engine
 // and registers move info in ant
-void Bot::MakeMove(Ant& ant, int direction)
+void Bot::MakeMove(Ant* ant, int direction)
 {
-    cout << "o " << ant.CurrentLocation.Row << " " << ant.CurrentLocation.Col << " " << CDIRECTIONS[direction] << endl;
-
-    Location nLoc = State.GetLocation(ant.CurrentLocation, direction);
-
-    ant.NextLocation = nLoc;
-    ant.Decided = true;
-    ant.MoveDirection = direction;
-
-    // Add destination Ant to Grid
-    State.Grid[nLoc.Row][nLoc.Col].Ant.Decided = ant.Decided;
-    State.Grid[nLoc.Row][nLoc.Col].Ant.Team = ant.Team;
-    State.Grid[nLoc.Row][nLoc.Col].Ant.NextLocation = State.Grid[nLoc.Row][nLoc.Col].Ant.CurrentLocation;
+    Location nLoc = State.GetLocation(ant->CurrentLocation, direction);
+    if(State.Grid[nLoc.Row][nLoc.Col].IsFood)
+    {
+        // Do not move if going towards food (food has collisions)
+        ant->Decided = true;
+        ant->NextLocation = ant->CurrentLocation;
+    }
+    else
+    {
+        cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[direction] << endl;
+        State.Bug << "Moving ant of ID " << ant->Id << " to " << nLoc.Row << "/" << nLoc.Col << endl;
+        ant->NextLocation = nLoc;
+        ant->Decided = true;
+        ant->MoveDirection = direction;
+        // Add destination Ant to Grid
+        State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
+    }
 }

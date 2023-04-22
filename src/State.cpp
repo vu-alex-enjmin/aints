@@ -1,4 +1,5 @@
 #include "State.h"
+
 #include <limits>
 #include <queue>
 #include <algorithm>
@@ -28,7 +29,11 @@ void State::Setup()
 //resets all non-water squares to land and clears the bots ant vector
 void State::Reset()
 {
-    MyAnts.clear();
+    for (const Location &enemyLoc : EnemyAnts)
+    {
+        if (Grid[enemyLoc.Row][enemyLoc.Col].Ant != nullptr)
+            delete Grid[enemyLoc.Row][enemyLoc.Col].Ant;
+    }
     EnemyAnts.clear();
     MyHills.clear();
     EnemyHills.clear();
@@ -37,6 +42,24 @@ void State::Reset()
         for(int col=0; col<Cols; col++)
             if(!Grid[row][col].IsWater)
                 Grid[row][col].Reset();
+    Ant* ant;
+    for (const auto antPair : MyIndexedAnts)
+    {
+        ant = antPair.second;
+        Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
+
+        // Apply move to ant for next turn
+        if(ant->Decided)
+        {
+            ant->CurrentLocation = ant->NextLocation;
+            ant->Decided = false;
+            ant->NextLocation = Location(-1,-1);
+            ant->MoveDirection = -1;
+            Bug << "Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
+        }
+        Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
+        Bug << "Reset Done " << ant->Id << endl; 
+    }
 }
 
 //returns the euclidean distance between two locations with the edges wrapped
@@ -134,32 +157,35 @@ vector<int> State::AStar(const Location &startLoc, const Location &targetLoc)
 void State::UpdateVisionInformation()
 {
     std::queue<Location> locQueue;
-    Location sLoc, cLoc, nLoc;
+    Location startLoc, currentLoc, nextLoc;
 
-    for(int a=0; a<(int) MyAnts.size(); a++)
+    Ant* ant;
+    for (const auto antPair : MyIndexedAnts)
     {
-        sLoc = MyAnts[a];
-        locQueue.push(sLoc);
+        ant = antPair.second;
+        startLoc = ant->CurrentLocation;
+
+        locQueue.push(startLoc);
 
         std::vector<std::vector<bool> > visited(Rows, std::vector<bool>(Cols, 0));
-        Grid[sLoc.Row][sLoc.Col].TurnsInFog = 0;
-        visited[sLoc.Row][sLoc.Col] = 1;
+        Grid[startLoc.Row][startLoc.Col].TurnsInFog = 0;
+        visited[startLoc.Row][startLoc.Col] = 1;
 
         while(!locQueue.empty())
         {
-            cLoc = locQueue.front();
+            currentLoc = locQueue.front();
             locQueue.pop();
 
             for(int d=0; d<TDIRECTIONS; d++)
             {
-                nLoc = GetLocation(cLoc, d);
+                nextLoc = GetLocation(currentLoc, d);
 
-                if(!visited[nLoc.Row][nLoc.Col] && Distance(sLoc, nLoc) <= ViewRadius)
+                if(!visited[nextLoc.Row][nextLoc.Col] && Distance(startLoc, nextLoc) <= ViewRadius)
                 {
-                    Grid[nLoc.Row][nLoc.Col].TurnsInFog = 0;
-                    locQueue.push(nLoc);
+                    Grid[nextLoc.Row][nextLoc.Col].TurnsInFog = 0;
+                    locQueue.push(nextLoc);
                 }
-                visited[nLoc.Row][nLoc.Col] = 1;
+                visited[nextLoc.Row][nextLoc.Col] = 1;
             }
         }
     }
@@ -252,7 +278,7 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
     {
         currentScore = 0;
         explLoc = GetLocation(startLoc, exploreDir);
-        if ((Grid[explLoc.Row][explLoc.Col].Ant.Team == -1) && 
+        if ((Grid[explLoc.Row][explLoc.Col].Ant == nullptr) && 
             (!Grid[explLoc.Row][explLoc.Col].IsWater))
         {
             std::queue<Location> locQueue;
@@ -329,8 +355,8 @@ ostream& operator<<(ostream &os, const State &state)
                 os << '*';
             else if(state.Grid[row][col].IsHill)
                 os << (char)('A' + state.Grid[row][col].HillPlayer);
-            else if(state.Grid[row][col].Ant.Team >= 0)
-                os << (char)('a' + state.Grid[row][col].Ant.Team);
+            else if(state.Grid[row][col].Ant != nullptr)
+                os << (char)('a' + state.Grid[row][col].Ant->Team);
             else if(state.Grid[row][col].TurnsInFog == 0)
                 os << '.';
             else
@@ -347,6 +373,7 @@ istream& operator>>(istream &is, State &state)
 {
     int row, col, player;
     string inputType, junk;
+    Ant* ant;
 
     //finds out which turn it is
     while(is >> inputType)
@@ -411,6 +438,7 @@ istream& operator>>(istream &is, State &state)
         //reads information about the current Turn
         while(is >> inputType)
         {
+            // state.Bug << inputType << endl;
             if(inputType == "w") //water square
             {
                 is >> row >> col;
@@ -425,15 +453,50 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "a") //live ant square
             {
                 is >> row >> col >> player;
-                state.Grid[row][col].Ant = Ant(player, Location(row, col));
-                if(player == 0)
-                    state.MyAnts.push_back(Location(row, col));
-                else
-                    state.EnemyAnts.push_back(Location(row, col));
+                if (state.Grid[row][col].Ant == nullptr) // new ant
+                {
+                    ant = new Ant(player, Location(row, col));
+                    state.Bug << "Ant added" << ant->Id <<" - (" << ant->Team << ") "<< row <<"/"<< col << endl;
+                    state.Grid[row][col].Ant = ant;
+                    
+                    if(player == 0)
+                    {
+                        
+                        state.MyIndexedAnts[ant->Id] = ant;
+                    }
+                    else
+                    {
+                        state.EnemyAnts.push_back(Location(row, col));
+                    }
+                }
             }
+
             else if(inputType == "d") //dead ant square
             {
                 is >> row >> col >> player;
+                if ((player == 0) &&
+                    (state.Grid[row][col].Ant != nullptr) &&
+                    (state.Grid[row][col].Ant->Team == 0))
+                {
+                    try
+                    {
+                        state.Bug << "Dead ID - "<<
+                        state.Grid[row][col].Ant->Id << " "
+                        << row << "/" << col << endl;
+
+                        ant = state.MyIndexedAnts.at( state.Grid[row][col].Ant->Id );
+                        state.MyIndexedAnts.erase(ant->Id);
+                        delete ant;
+                        
+                    }
+                    catch ( const exception & e ) {
+                        state.Bug << "Dead "<< e.what() << ": ID - "<<
+                        state.Grid[row][col].Ant->Id << " "
+                        << row << "/" << col << endl;
+                    }
+
+                    state.Grid[row][col].Ant = nullptr;
+                }
             }
             else if(inputType == "h")
             {

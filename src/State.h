@@ -11,6 +11,7 @@
 #include <stack>
 #include <stdint.h>
 #include <functional>
+#include <map>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -43,8 +44,9 @@ struct State
     bool GameOver;
     int64_t Seed;
 
+    std::map<int, Ant*> MyIndexedAnts;
     std::vector<std::vector<Square>> Grid;
-    std::vector<Location> MyAnts, EnemyAnts, MyHills, EnemyHills, Food;
+    std::vector<Location> EnemyAnts, MyHills, EnemyHills, Food;
 
     Timer Timer;
     Bug Bug;
