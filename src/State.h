@@ -37,6 +37,7 @@ struct State
         Turn, MaxTurns,
         NoPlayers;
     double AttackRadius, SpawnRadius, ViewRadius;
+    int AttackRadius2, SpawnRadius2, ViewRadius2;
     double LoadTime, TurnTime;
     std::vector<double> Scores;
     bool GameOver;

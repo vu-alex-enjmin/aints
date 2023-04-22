@@ -384,18 +384,18 @@ istream& operator>>(istream &is, State &state)
                 is >> state.Seed;
             else if(inputType == "viewradius2")
             {
-                is >> state.ViewRadius;
-                state.ViewRadius = sqrt(state.ViewRadius);
+                is >> state.ViewRadius2;
+                state.ViewRadius = sqrt(state.ViewRadius2);
             }
             else if(inputType == "attackradius2")
             {
-                is >> state.AttackRadius;
-                state.AttackRadius = sqrt(state.AttackRadius);
+                is >> state.AttackRadius2;
+                state.AttackRadius = sqrt(state.AttackRadius2);
             }
             else if(inputType == "spawnradius2")
             {
-                is >> state.SpawnRadius;
-                state.SpawnRadius = sqrt(state.SpawnRadius);
+                is >> state.SpawnRadius2;
+                state.SpawnRadius = sqrt(state.SpawnRadius2);
             }
             else if(inputType == "ready") //end of parameter input
             {
