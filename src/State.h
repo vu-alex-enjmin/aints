@@ -59,6 +59,7 @@ struct State
     void Reset();
 
     double Distance(const Location &loc1, const Location &loc2);
+    int Distance2(const Location &loc1, const Location &loc2);
     double ManhattanDistance(const Location &loc1, const Location &loc2);
     Location GetLocation(const Location &startLoc, int direction);
     Location BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, std::function<bool(const Location&)> const &stopPredicate, bool ignoreWater = false);

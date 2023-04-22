@@ -42,11 +42,17 @@ void State::Reset()
 //returns the euclidean distance between two locations with the edges wrapped
 double State::Distance(const Location &loc1, const Location &loc2)
 {
+    return sqrt(Distance2(loc1, loc2));
+}
+
+// returns the euclidean square distance between two locations with the edges wrapped
+int State::Distance2(const Location &loc1, const Location &loc2)
+{
     int d1 = abs(loc1.Row-loc2.Row),
         d2 = abs(loc1.Col-loc2.Col),
         dr = min(d1, Rows-d1),
         dc = min(d2, Cols-d2);
-    return sqrt(dr*dr + dc*dc);
+    return dr*dr + dc*dc;
 }
 
 //returns the new location from moving in a given direction with the edges wrapped
