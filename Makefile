@@ -6,9 +6,13 @@ SRC_DIR=src/
 OBJ_DIR=obj/
 EXE_DIR=build/
 
-SOURCES=$(wildcard $(SRC_DIR)*.cpp)
+SOURCES=$(wildcard $(SRC_DIR)**/*.cpp) $(wildcard $(SRC_DIR)*.cpp)
+SRC_SUB_DIRS=core util 
 OBJECTS=$(patsubst ${SRC_DIR}%.cpp,${OBJ_DIR}%.o,$(SOURCES))
 EXECUTABLE=$(EXE_DIR)MyBot
+
+INCLUDE_PATHS=$(addprefix -I${SRC_DIR}, $(SRC_SUB_DIRS))
+CFLAGS:=$(INCLUDE_PATHS) $(CFLAGS)
 
 #Uncomment the following to enable debugging
 #CFLAGS+=-g -DDEBUG
@@ -23,8 +27,9 @@ $(OBJ_DIR)%.o : $(SRC_DIR)%.cpp
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $< -o $@
 
-clean: 
-	-rm -f ${EXECUTABLE} ${OBJECTS} *.d
+clean:
+	@echo ${INCLUDE_PATHS}
+	-rm -rf ${OBJ_DIR}* ${EXE_DIR}*
 	-rm -f debug.txt
 
 .PHONY: all clean

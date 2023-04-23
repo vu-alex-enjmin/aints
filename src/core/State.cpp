@@ -297,7 +297,7 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
                 currLoc = locQueue.front();
                 locQueue.pop();
                 currentScore += Grid[currLoc.Row][currLoc.Col].TurnsInFog;
-                if(distances[currLoc.Row][currLoc.Col] < stopRange)
+                if (distances[currLoc.Row][currLoc.Col] < stopRange)
                 {
                     nextDist = distances[currLoc.Row][currLoc.Col] + 1;
                     for (int d = 0; d < TDIRECTIONS; d++)
@@ -320,7 +320,8 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
             }
         }
     }
-    if(bestScore == 0)
+    
+    if (bestScore == 0)
     {
         return Location(-1, -1);
     }
