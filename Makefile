@@ -7,7 +7,7 @@ OBJ_DIR=obj/
 EXE_DIR=build/
 
 SOURCES=$(wildcard $(SRC_DIR)**/*.cpp) $(wildcard $(SRC_DIR)*.cpp)
-SRC_SUB_DIRS=core util 
+SRC_SUB_DIRS=core util tasks
 OBJECTS=$(patsubst ${SRC_DIR}%.cpp,${OBJ_DIR}%.o,$(SOURCES))
 EXECUTABLE=$(EXE_DIR)MyBot
 
