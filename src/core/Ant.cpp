@@ -11,3 +11,15 @@ Ant::Ant(int team, Location location)
     Id = currentId;
     currentId ++;
 }
+
+void Ant::SetMoveDirection(int moveDirection)
+{
+    MoveDirection = moveDirection;
+    Decided = true;
+}
+
+void Ant::ResetMoveDirection()
+{
+    MoveDirection = -1;
+    Decided = false;
+}

@@ -38,6 +38,7 @@ void State::Reset()
     MyHills.clear();
     EnemyHills.clear();
     Food.clear();
+    NewlyDeadAllyAnts.clear();
     for(int row = 0; row < Rows; row++)
         for(int col = 0; col < Cols; col++)
             if(!Grid[row][col].IsWater)
@@ -51,9 +52,8 @@ void State::Reset()
         if(ant->Decided)
         {
             ant->CurrentLocation = ant->NextLocation;
-            ant->Decided = false;
             ant->NextLocation = Location(-1,-1);
-            ant->MoveDirection = -1;
+            ant->ResetMoveDirection();
             Bug << "   Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
         }
         Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
@@ -492,8 +492,8 @@ istream& operator>>(istream &is, State &state)
 
                         ant = state.AllyAnts.at( state.Grid[row][col].Ant->Id );
                         state.AllyAnts.erase(ant->Id);
+
                         delete ant;
-                        
                     }
                     catch (const exception & e) 
                     {

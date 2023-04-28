@@ -48,12 +48,12 @@ void Bot::MakeMoves()
     int offset;
     int direction;
 
-    Ant* ant;
-    // Picks out moves for each ant
+    Ant *ant;
+    // Picks out a default move for each ant
     for (const auto &antPair : State.AllyAnts)
     {
         ant = antPair.second;
-        // Check if ant already moved
+        // Check if ant already has decided on a move
         if (!ant->Decided)
         {
             offset = rand();
@@ -63,14 +63,21 @@ void Bot::MakeMoves()
                 Location destination = State.GetLocation(ant->CurrentLocation, direction);
 
                 if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
-                    (State.Grid[destination.Row][destination.Col].Ant == nullptr) &&
+                    //(State.Grid[destination.Row][destination.Col].Ant == nullptr) &&
                     (State.Grid[destination.Row][destination.Col].HillPlayer != 0))
                 {
-                    MakeMove(ant, direction);
+                    ant->SetMoveDirection(direction);
                     break;
                 }
             }
         }
+    }
+
+    // Make every ant move
+    for (const auto &antPair : State.AllyAnts)
+    {
+        ant = antPair.second;
+        MakeMove(ant);
     }
 
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
@@ -97,8 +104,7 @@ void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const i
     if (!(antLocation == Location(-1,-1)))
     {
         Location newLocation = State.GetLocation(antLocation, direction);
-        if (State.Grid[newLocation.Row][newLocation.Col].Ant == nullptr)
-            MakeMove(State.Grid[antLocation.Row][antLocation.Col].Ant, direction);
+        State.Grid[antLocation.Row][antLocation.Col].Ant->SetMoveDirection(direction);
     }
 }
 
@@ -260,7 +266,10 @@ void Bot::Combat()
 void Bot::EndTurn()
 {
     if (State.Turn > 0)
+    {
         State.Reset();
+        _antsBlockedByOtherAnts.clear();
+    }
     State.Turn++;
 
     cout << "go" << endl;
@@ -285,7 +294,7 @@ void Bot::ExploreFog()
             destination = State.SearchMostFogged(ant->CurrentLocation, &direction, ((int)State.ViewRadius)+5);
             if (destination != Location(-1,-1))
             {
-                MakeMove(ant, direction);
+                ant->SetMoveDirection(direction);
             }
 
             State.Bug << "Exit SearchMostFogged" << endl;
@@ -300,23 +309,43 @@ void Bot::ExploreFog()
 
 // outputs move information to the engine
 // and registers move info in ant
-void Bot::MakeMove(Ant* ant, int direction)
+void Bot::MakeMove(Ant* ant)
 {
-    Location nLoc = State.GetLocation(ant->CurrentLocation, direction);
-    if (State.Grid[nLoc.Row][nLoc.Col].IsFood)
+    State.Bug << "MAKE MOVE ant of ID " << ant->Id << endl;
+    if (ant->MoveDirection == -1)
+    {
+        ant->NextLocation = ant->CurrentLocation;
+        return;
+    }
+
+    Location nLoc = State.GetLocation(ant->CurrentLocation, ant->MoveDirection);
+
+    Square &nextSquare = State.Grid[nLoc.Row][nLoc.Col];
+    if (nextSquare.IsFood)
     {
         // Do not move if going towards food (food has collisions)
-        ant->Decided = true;
+        ant->NextLocation = ant->CurrentLocation;
+    }
+    else if ((nextSquare.Ant != nullptr) && (nextSquare.Ant->Team == 0))
+    {
+        _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
         ant->NextLocation = ant->CurrentLocation;
     }
     else
     {
-        cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[direction] << endl;
+        cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[ant->MoveDirection] << endl;
         State.Bug << "Moving ant of ID " << ant->Id << " to " << nLoc.Row << "/" << nLoc.Col << endl;
         ant->NextLocation = nLoc;
-        ant->Decided = true;
-        ant->MoveDirection = direction;
-        // Add destination Ant to Grid
+        
+        State.Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = nullptr;
         State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
+
+        auto blockedAntIterator = _antsBlockedByOtherAnts.find(ant->Id); 
+        if (blockedAntIterator != _antsBlockedByOtherAnts.end())
+        {
+            MakeMove(blockedAntIterator->second);
+        }
     }
+
+    // TODO : check "Ant loops" in its own function 
 }

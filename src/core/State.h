@@ -46,7 +46,7 @@ struct State
 
     std::map<int, Ant*> AllyAnts;
     std::vector<std::vector<Square>> Grid;
-    std::vector<Location> EnemyAnts, MyHills, EnemyHills, Food;
+    std::vector<Location> EnemyAnts, MyHills, EnemyHills, Food, NewlyDeadAllyAnts;
 
     Timer Timer;
     Bug Bug;
