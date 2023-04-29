@@ -31,7 +31,6 @@ void Bot::PlayGame()
     {
         State.UpdateVisionInformation();
         State.UpdateHillInformation();
-        State.UpdateHillInformation();
         MakeMoves();
         EndTurn();
     }
@@ -238,8 +237,6 @@ void Bot::MakeMoves()
 
     State.Bug << "FinalMove End" << endl;
 
-    State.Bug << "FinalMove End" << endl;
-
     // Make every ant move
     for (const auto &antPair : State.AllyAnts)
     {
@@ -283,12 +280,22 @@ void Bot::SeekFood()
     }
 }
 
+void Bot::CallAllies()
+{
+    
+}
+
 void Bot::DestroyOtherHills()
 {
     for (const Location &hillLoc : State.EnemyHills)
     {
         MoveClosestAvailableAntTowards(hillLoc, (int)(2 * State.ViewRadius));
     }
+}
+
+void Bot::DefendHills()
+{
+
 }
 
 void Bot::Combat()
