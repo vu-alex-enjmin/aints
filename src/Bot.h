@@ -7,6 +7,7 @@
 #include "State.h"
 #include "Location.h"
 #include "GuardHillTask.h"
+#include "CombatEvaluator.h"
 
 /*
     This struct represents your bot in the game of Ants
@@ -15,6 +16,7 @@ class Bot
 {
     public:
         State State;
+        CombatEvaluator CombatEvaluator;
 
         Bot();
 
@@ -24,6 +26,10 @@ class Bot
         void EndTurn(); // Indicates to the engine that it has made its moves
 
     private:
+        // Combat management
+        std::vector<std::unordered_set<Location, Location>> allyGroups; // Groups of allies
+        std::vector<std::unordered_set<Location, Location>> enemyGroups; // Groups of enemies opposing each ally group (same size as allyGroups)
+
         // std::unordered_map<int, JoinAntTask> _joinAntTasks;
         // std::unordered_map<Location, AttackHillTask> _attackHillTasks;
         std::vector<GuardHillTask> _guardHillTasks;
@@ -35,6 +41,7 @@ class Bot
         void ExploreFog();
         void DestroyOtherHills();
         void Combat();
+        void ComputeArmies();
 
         // Create and assign tasks to ants
         void InitializeTasks();

@@ -4,10 +4,14 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include "CombatState.h"
+
 using namespace std;
 
 // Constructor
 Bot::Bot()
+    : State()
+    , CombatEvaluator(&State)
 {
 
 }
@@ -279,12 +283,55 @@ void Bot::DestroyOtherHills()
 
 void Bot::Combat()
 {
+    ComputeArmies();
+
+    // Compute combat move for all armies
+    for (int i = 0; i < allyGroups.size(); i++)
+    {
+        State.Bug << "Combat " << i << endl;
+        State.Bug << "   " << "A=" << allyGroups[i].size() << endl;
+        for (const Location &ally : allyGroups[i])
+        {
+            State.Bug << "      " << ally.Row << "/" << ally.Col << endl;
+        }
+        State.Bug << "   " << "E=" << enemyGroups[i].size() << endl;
+        for (const Location &enemy : enemyGroups[i])
+        {
+            State.Bug << "      " << enemy.Row << "/" << enemy.Col << endl;
+        }
+
+        CombatState combatState;
+        for (const auto &allyLoc : allyGroups[i]) 
+        {
+            combatState.UnmovedAllies.push(State.Grid[allyLoc.Row][allyLoc.Col].Ant);
+        }
+        
+        for (const auto &enemyLoc : enemyGroups[i]) 
+        {
+            combatState.UnmovedEnemies.push(State.Grid[enemyLoc.Row][enemyLoc.Col].Ant);
+        }
+        CombatEvaluator.ComputeBestMove(&combatState);
+
+        while (!CombatEvaluator.BestMoves.empty())
+        {
+            pair<Ant*, int> &bestMove = CombatEvaluator.BestMoves.top();
+            State.AllyAnts[bestMove.first->Id]->SetMoveDirection(bestMove.second);
+            CombatEvaluator.BestMoves.pop();
+        }
+    }
+}
+
+void Bot::ComputeArmies()
+{
+    // (Re)initialize ally/enemy groups
+    allyGroups.clear();
+    enemyGroups.clear();
+
     if (State.EnemyAnts.empty())
         return;
 
-    // Initialize
-    vector<unordered_set<Location, Location>> allyGroups;
-    vector<unordered_set<Location, Location>> enemyGroups;
+    // Search for enemy groups close to allies
+    //   Initialization
     unordered_set<Location, Location> allyGroup;
     auto onVisited = [&,this](const Location &location)
     {
@@ -296,12 +343,11 @@ void Bot::Combat()
             allyGroup.insert(location);
         }
     };
-    
-    // Search for enemy groups close to allies
+    //  Begin search
     for (const Location &antLoc : State.EnemyAnts)
     {
         allyGroup.clear();
-        State.BreadthFirstSearchAll(antLoc, State.AttackRadius + 2, onVisited, true);
+        State.BreadthFirstSearchAll(antLoc, State.AttackRadius + 3, onVisited, true);
         
         if (allyGroup.size() > 0)
         {
@@ -346,70 +392,6 @@ void Bot::Combat()
                     i--;
                 
                 j--;
-            }
-        }
-    }
-
-    // Compute life/death state for all opposing armies
-    for (int i = 0; i < allyGroups.size(); i++)
-    {
-        unordered_set<Location, Location> movedAllyGroup = allyGroups[i];
-        unordered_set<Location, Location> movedEnemyGroup = enemyGroups[i];
-
-        // Initialize opponent count for allies and enemies
-        for (const auto &ally : allyGroups[i]) 
-        {
-            State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount = 0;
-        }
-        for (const auto &enemy : enemyGroups[i]) 
-        {
-            State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount = 0;
-        }
-
-        // Compute opponent count for allies and enemies
-        for (const auto &ally : allyGroups[i]) 
-        {
-            for (const auto &enemy : enemyGroups[i]) 
-            {
-                if (State.Distance2(ally, enemy) > State.AttackRadius2)
-                    continue;
-                
-                State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount++;
-                State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount++;
-            }
-        }
-
-        // Compute how many ally ant will die
-        int allyDeathCount = 0;
-        for (const auto &ally : allyGroups[i]) 
-        {
-            for (const auto &enemy : enemyGroups[i]) 
-            {
-                if (State.Distance2(ally, enemy) > State.AttackRadius2)
-                    continue;
-                
-                if (State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount >= State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount)
-                {
-                    allyDeathCount++;
-                    break;
-                }
-            }
-        }
-
-        // Compute how many enemy ant will die
-        int enemyDeathCount = 0;
-        for (const auto &enemy : enemyGroups[i]) 
-        {
-            for (const auto &ally : allyGroups[i]) 
-            {
-                if (State.Distance2(enemy, ally) > State.AttackRadius2)
-                    continue;
-                
-                if (State.Grid[enemy.Row][enemy.Col].Ant->SurroundingOpponentCount >= State.Grid[ally.Row][ally.Col].Ant->SurroundingOpponentCount)
-                {
-                    enemyDeathCount++;
-                    break;
-                }
             }
         }
     }
