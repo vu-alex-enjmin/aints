@@ -4,6 +4,7 @@
 
 #include <limits>
 #include <unordered_map>
+#define MAX_ITERATIONS 50000
 
 using namespace std;
 
@@ -31,7 +32,6 @@ void CombatEvaluator::ComputeBestMove(CombatState *startingCombatState)
     GameState->Bug << "Initialize End - Begin ComputeNextAllyMove" << endl;
     ComputeNextAllyMove();
     GameState->Bug << "Algorithm End ("<< TotalIterations<<" Iterations)" << endl;
-
 }
         
 void CombatEvaluator::ComputeNextAllyMove()
@@ -39,6 +39,11 @@ void CombatEvaluator::ComputeNextAllyMove()
     //GameState->Bug << " Compute Ally " << endl;
     
     TotalIterations++;
+    if (TotalIterations > MAX_ITERATIONS) 
+    {
+        return;
+    }
+    
     // TODO : check if TotalIterations too high
     if (CurrentCombatState->UnmovedAllies.size() > 0)
     {
@@ -61,15 +66,15 @@ void CombatEvaluator::ComputeNextAllyMove()
         int iterations = TotalIterations;
         int move;
         bool moveMade = false;
-        // for(int i = -1; i < TDIRECTIONS; i++)
-        for(int i = 0; i < TDIRECTIONS; i++)
+        for(int i = -1; i < TDIRECTIONS; i++)
+        // for(int i = 0; i < TDIRECTIONS; i++)
         {
-            move = (i + iterations) % TDIRECTIONS;
+            move = ((i + 1 + iterations) % (TDIRECTIONS + 1)) - 1;
             //GameState->Bug << "Ally Compute Next Location" << endl;
             nextLocation = 
-                // (i == -1) ? 
-                // (toMove->CurrentLocation) :
-                GameState->GetLocation(toMove->CurrentLocation,move);
+                (move == -1) ? 
+                (toMove->CurrentLocation) :
+                GameState->GetLocation(toMove->CurrentLocation, move);
             
             //GameState->Bug << "Ally Check Location" << endl;
             // Check next location validity (not Water & no moved Ally)
@@ -140,6 +145,12 @@ void CombatEvaluator::ComputeNextAllyMove()
 
 int CombatEvaluator::ComputeNextEnemyMove()
 {
+    TotalIterations++;
+
+    if (TotalIterations > MAX_ITERATIONS) 
+    {
+        return -5;
+    }
 /*
 
 if antIndex < enemyAnts.size
@@ -161,7 +172,7 @@ else
     return evaluate()
 */
 
-    GameState->Bug << " Compute Enemy " << endl;
+    //GameState->Bug << " Compute Enemy " << endl;
 
     if (CurrentCombatState->UnmovedEnemies.size() > 0)
     {
@@ -173,13 +184,17 @@ else
         Location nextLocation;
 
         bool moveMade = false;
-        // for(int i = -1; i < TDIRECTIONS; i++)
-        for(int i = 0; i < TDIRECTIONS; i++)
+
+        int iterations = TotalIterations;
+        int move;
+        for(int i = -1; i < TDIRECTIONS; i++)
+        // for(int i = 0; i < TDIRECTIONS; i++)
         {
+            move = ((i + 1 + iterations) % (TDIRECTIONS + 1)) - 1;
             nextLocation = 
-                // (i == -1) ? 
-                // (toMove->CurrentLocation) :
-                (GameState->GetLocation(toMove->CurrentLocation, i));
+                (move == -1) ? 
+                (toMove->CurrentLocation) :
+                GameState->GetLocation(toMove->CurrentLocation, move);
             
             // Check next location validity (not Water & no moved Ally)
             if ((GameState->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
@@ -292,7 +307,7 @@ int CombatEvaluator::EvaluateCurrentCombatState()
         }
     }
 
-    GameState->Bug << "Evaluate : " << ((enemyDeathCount * 10) - (allyDeathCount * 15)) << endl;
+    //GameState->Bug << "Evaluate : " << ((enemyDeathCount * 10) - (allyDeathCount * 15)) << endl;
     
     return (enemyDeathCount * 10) - (allyDeathCount * 15); 
 }
