@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <functional>
 #include <map>
+#include <unordered_set>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -46,7 +47,8 @@ struct State
 
     std::map<int, Ant*> AllyAnts;
     std::vector<std::vector<Square>> Grid;
-    std::vector<Location> EnemyAnts, MyHills, EnemyHills, Food, NewlyDeadAllyAnts;
+    std::vector<Location> EnemyAnts, Food, NewlyDeadAllyAnts;
+    std::unordered_set<Location, Location> MyHills, EnemyHills;
 
     Timer Timer;
     Bug Bug;
@@ -72,6 +74,7 @@ struct State
     std::vector<int> AStar(const Location &startLoc, const Location &targetLoc);
     Location SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange);
     void UpdateVisionInformation();
+    void UpdateHillInformation();
 };
 
 std::ostream& operator<<(std::ostream &os, const State &state);

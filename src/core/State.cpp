@@ -29,20 +29,25 @@ void State::Setup()
 // Resets all non-water squares to land and clears the bots ant vector
 void State::Reset()
 {
+    Bug << "Reset 1" << endl;
     for (const Location &enemyLoc : EnemyAnts)
     {
         if (Grid[enemyLoc.Row][enemyLoc.Col].Ant != nullptr)
             delete Grid[enemyLoc.Row][enemyLoc.Col].Ant;
     }
+
+    Bug << "Reset 2" << endl;
     EnemyAnts.clear();
-    MyHills.clear();
-    EnemyHills.clear();
     Food.clear();
     NewlyDeadAllyAnts.clear();
+
+    Bug << "Reset 3" << endl;
     for(int row = 0; row < Rows; row++)
         for(int col = 0; col < Cols; col++)
             if(!Grid[row][col].IsWater)
                 Grid[row][col].Reset();
+    
+    Bug << "Reset 4" << endl;
     Ant* ant;
     for (const auto &antPair : AllyAnts)
     {
@@ -58,6 +63,39 @@ void State::Reset()
         }
         Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
         // Bug << "Reset Done " << ant->Id << endl; 
+    }
+}
+
+void State::UpdateHillInformation()
+{
+    // Check if ally hills got deleted
+    for (auto it = MyHills.begin(); it != MyHills.end(); ) 
+    {
+        if ((Grid[it->Row][it->Col].TurnsInFog == 0) &&
+            (Grid[it->Row][it->Col].HillPlayer == -1)) 
+        {
+            Bug << "Hill Razed at "<<it->Row << "/" << it->Col << endl;
+            MyHills.erase(it++);
+        }
+        else 
+        {
+            ++it;
+        }
+    }
+
+    // Check if enemy hills got deleted
+    for (auto it = EnemyHills.begin(); it != EnemyHills.end(); ) 
+    {
+        if ((Grid[it->Row][it->Col].TurnsInFog == 0) &&
+            (Grid[it->Row][it->Col].HillPlayer == -1)) 
+        {
+            Bug << "Hill Razed at "<<it->Row << "/" << it->Col << endl;
+            EnemyHills.erase(it++);
+        }
+        else 
+        {
+            ++it;
+        }
     }
 }
 
@@ -523,7 +561,6 @@ istream& operator>>(istream &is, State &state)
                     }
                 }
             }
-
             else if (inputType == "d") // Dead ant square
             {
                 is >> row >> col >> player;
@@ -558,9 +595,9 @@ istream& operator>>(istream &is, State &state)
                 state.Grid[row][col].IsHill = 1;
                 state.Grid[row][col].HillPlayer = player;
                 if (player == 0)
-                    state.MyHills.push_back(Location(row, col));
+                    state.MyHills.insert(Location(row, col));
                 else
-                    state.EnemyHills.push_back(Location(row, col));
+                    state.EnemyHills.insert(Location(row, col));
 
             }
             else if (inputType == "players") // Player information

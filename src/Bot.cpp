@@ -30,6 +30,8 @@ void Bot::PlayGame()
     while (cin >> State)
     {
         State.UpdateVisionInformation();
+        State.UpdateHillInformation();
+        State.UpdateHillInformation();
         MakeMoves();
         EndTurn();
     }
@@ -45,13 +47,17 @@ void Bot::InitializeTasks()
     */
 
     // Ant Hill Protection ======================================================
-    int antCount = State.AllyAnts.size();
-
-    // Clear Wall
-    _guardHillTasks.clear();
     
-    int wallRange = (1*antCount/4) / (4*State.MyHills.size());
 
+    // Reset Wall
+    _guardHillTasks.clear();
+
+    if (State.MyHills.size() <= 0)
+        return;
+
+    int antCount = State.AllyAnts.size();
+    int wallRange = (3*antCount/5) / (4*State.MyHills.size());
+    
     if (wallRange >= 1)
     {
         // Create tasks for wall and retrieve possible candidates for it
@@ -95,7 +101,7 @@ void Bot::InitializeTasks()
             return false;
         };
         
-        State.MultiBreadthFirstSearchAll(State.MyHills, wallRange+2, onVisited, false);
+        State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), wallRange+2, onVisited, false);
 
         while (wallCandidateAnts.size() > _guardHillTasks.size())
         {
@@ -179,6 +185,9 @@ void Bot::MakeMoves()
 
     State.Bug << "Turn " << State.Turn << ":" << endl;
     // State.Bug << State << endl;
+    
+    State.Bug << "ClearFinishedTasks" << endl;
+    ClearFinishedTasks();
 
     State.Bug << "InitializeTasks" << endl;
     InitializeTasks();
@@ -197,9 +206,6 @@ void Bot::MakeMoves()
 
     State.Bug << "ExploreFog" << endl;
     ExploreFog();
-
-    State.Bug << "ClearFinishedTasks" << endl;
-    ClearFinishedTasks();
 
     State.Bug << "FinalMove" << endl;
     int offset;
@@ -229,6 +235,10 @@ void Bot::MakeMoves()
             }
         }
     }
+
+    State.Bug << "FinalMove End" << endl;
+
+    State.Bug << "FinalMove End" << endl;
 
     // Make every ant move
     for (const auto &antPair : State.AllyAnts)
@@ -458,11 +468,13 @@ void Bot::MakeMove(Ant* ant)
     Square &nextSquare = State.Grid[nLoc.Row][nLoc.Col];
     if (nextSquare.IsFood)
     {
+        // State.Bug << "Food Blocked Ant";
         // Do not move if going towards food (food has collisions)
         ant->NextLocation = ant->CurrentLocation;
     }
     else if ((nextSquare.Ant != nullptr) && (nextSquare.Ant->Team == 0))
     {
+        // State.Bug << "Blocked Ant";
         _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
         ant->NextLocation = ant->CurrentLocation;
     }
@@ -478,6 +490,7 @@ void Bot::MakeMove(Ant* ant)
         auto blockedAntIterator = _antsBlockedByOtherAnts.find(ant->Id); 
         if (blockedAntIterator != _antsBlockedByOtherAnts.end())
         {
+            // State.Bug << "Unlocked Ant";
             MakeMove(blockedAntIterator->second);
         }
     }
