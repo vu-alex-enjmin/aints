@@ -47,17 +47,17 @@ void State::Reset()
     for (const auto &antPair : AllyAnts)
     {
         ant = antPair.second;
-        Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
+        // Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
         // Apply move to ant for next turn
         if(ant->Decided)
         {
             ant->CurrentLocation = ant->NextLocation;
             ant->NextLocation = Location(-1,-1);
             ant->ResetMoveDirection();
-            Bug << "   Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
+            // Bug << "   Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
         }
         Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
-        Bug << "Reset Done " << ant->Id << endl; 
+        // Bug << "Reset Done " << ant->Id << endl; 
     }
 }
 
@@ -198,6 +198,11 @@ void State::UpdateVisionInformation()
 
 Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Location&)> const &stopPredicate, bool ignoreWater)
 {
+    if (stopPredicate(startLoc))
+    {
+        return startLoc;
+    }
+
     std::queue<Location> locQueue;
     Location currLoc, nextLoc;
     int nextDist;
@@ -263,6 +268,48 @@ void State::BreadthFirstSearchAll(const Location &startLoc, int range, function<
                 (nextDist <= range))
             {
                 onVisited(nextLoc);
+                locQueue.push(nextLoc);
+            }
+            distances[nextLoc.Row][nextLoc.Col] = nextDist;
+        }
+    }
+}
+
+void State::MultiBreadthFirstSearchAll(const std::vector<Location> &startLocs, int range, function<bool(const Location&, const int)> const &onVisited, bool ignoreWater)
+{
+    std::queue<Location> locQueue;
+
+    std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
+     for(auto startLoc : startLocs)
+     {
+        if (onVisited(startLoc, 0))
+        {
+            return;
+        }
+        locQueue.push(startLoc);
+        distances[startLoc.Row][startLoc.Col] = 0;
+     }
+
+    Location currLoc, nextLoc;
+    int nextDist;
+    while (!locQueue.empty())
+    {
+        currLoc = locQueue.front();
+        locQueue.pop();
+        nextDist = distances[currLoc.Row][currLoc.Col] + 1;
+
+        for (int d = 0; d < TDIRECTIONS; d++)
+        {
+            nextLoc = GetLocation(currLoc, d);
+
+            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
+                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
+                (nextDist <= range))
+            {
+                if (onVisited(nextLoc, nextDist))
+                {
+                    return;
+                }
                 locQueue.push(nextLoc);
             }
             distances[nextLoc.Row][nextLoc.Col] = nextDist;

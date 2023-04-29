@@ -31,19 +31,172 @@ void Bot::PlayGame()
     }
 }
 
+void Bot::InitializeTasks()
+{
+    /*
+    for (auto &antPair : State.AllyAnts)
+    {
+        State.Bug << "Has Task (Initialize)? " << antPair.second->HasTask() << endl;
+    }
+    */
+
+    // Ant Hill Protection ======================================================
+    int antCount = State.AllyAnts.size();
+
+    // Clear Wall
+    _guardHillTasks.clear();
+    
+    int wallRange = (1*antCount/4) / (4*State.MyHills.size());
+
+    if (wallRange >= 1)
+    {
+        // Create tasks for wall and retrieve possible candidates for it
+        vector<Ant*> wallCandidateAnts;
+        auto onVisited = [&,this](const Location &location, const int distance)
+        {
+            Square &visitedSquare = State.Grid[location.Row][location.Col];
+            if (!visitedSquare.IsWater)
+            {
+                if (distance == wallRange)
+                {
+                    _guardHillTasks.push_back(GuardHillTask(&State, location, &visitedSquare));
+                }
+
+                // State.Bug << "Cond1 : " << ((distance <= wallRange)?"true":"false") << "Cond2 : " << ((wallCandidateAnts.size() < _guardHillTasks.size())?"true":"false") << endl;
+                if ((distance <= wallRange) || (wallCandidateAnts.size() < _guardHillTasks.size()))
+                {
+                    /*
+                    State.Bug << "Enter " << location.Row << "," << location.Col << " " << (visitedSquare.Ant != nullptr);
+                    if (visitedSquare.Ant != nullptr)
+                    {
+                        State.Bug << " " << (visitedSquare.Ant->Team == 0) << " " << (!visitedSquare.Ant->HasTask());
+                    }
+                    State.Bug << endl;
+                    */
+
+                    if ((visitedSquare.Ant != nullptr) && 
+                        (visitedSquare.Ant->Team == 0) && 
+                        (!visitedSquare.Ant->HasTask()))
+                    {
+                        wallCandidateAnts.push_back(visitedSquare.Ant);
+                        // State.Bug << "New Candidate " << location.Row << "," << location.Col << endl;
+                    }
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+        
+        State.MultiBreadthFirstSearchAll(State.MyHills, wallRange+2, onVisited, false);
+
+        while (wallCandidateAnts.size() > _guardHillTasks.size())
+        {
+            wallCandidateAnts.pop_back();
+        }
+
+        // Roughly shuffle tasks to prevent huge parts of walls without ants
+        for (int i = _guardHillTasks.size() - 1; i > 0; --i)
+        {
+            swap(_guardHillTasks[i], _guardHillTasks[_guardHillTasks.size() - 1 - (rand() % (i + 1))]);
+        }
+
+        // Assign ants to tasks
+        int j = 0;
+        for (auto &task : _guardHillTasks)
+        {
+            // State.Bug << "ASSIGN TASK " << j++ << " Candidate Count : " << wallCandidateAnts.size() << endl;
+            for (auto wallCandidate : wallCandidateAnts)
+            {
+                task.AddCandidate(wallCandidate);
+            }
+            
+            // State.Bug << "Select Candidate" << endl;
+            task.SelectCandidate();
+            task.ClearCandidates();
+        }
+        
+        /*
+        for (auto &antPair : State.AllyAnts)
+        {
+            State.Bug << "Has Task? " << antPair.second->HasTask() << endl;
+        }
+        */
+    }
+}
+
+void Bot::DoTasks()
+{
+    for (auto &antPair : State.AllyAnts)
+    {
+        if ((!antPair.second->Decided) &&
+            (antPair.second->HasTask()))
+        {
+            antPair.second->CurrentTask->GiveOrderToAssignee();
+        }
+    }
+}
+
+void Bot::ClearFinishedTasks()
+{
+    // Clear invalid/finished guard hill tasks
+    //State.Bug << "Size Before " << _guardHillTasks.size() <<endl;
+
+    for (int i = _guardHillTasks.size() - 1; i >= 0; i--)
+    {
+        //State.Bug << "Hill Task " << endl;
+        //State.Bug << "Valid? " << _guardHillTasks[i].IsValid() << " Completed?" << _guardHillTasks[i].IsCompleted() << endl;
+        if ((!_guardHillTasks[i].IsValid()) || _guardHillTasks[i].IsCompleted())
+        {
+            _guardHillTasks.erase(_guardHillTasks.begin() + i); 
+        }
+        else
+        {
+            State.Bug << "Valid and/or Not Completed " << endl;
+        }
+    }
+
+    /*
+    for (auto &antPair : State.AllyAnts)
+    {
+        State.Bug << "Has Task (In ClearFinishedTask) ? " << antPair.second->HasTask() << endl;
+    }
+
+    State.Bug << "Size After " << _guardHillTasks.size() <<endl;
+    */
+}
+
 // Makes the bots moves for the Turn
 void Bot::MakeMoves()
 {
+
     State.Bug << "Turn " << State.Turn << ":" << endl;
-    State.Bug << State << endl;
+    // State.Bug << State << endl;
+
+    State.Bug << "InitializeTasks" << endl;
+    InitializeTasks();
+
     State.Bug << "Combat" << endl;
-    Combat();   
+    Combat();
+
     State.Bug << "DestroyOtherHills" << endl; 
     DestroyOtherHills();
+
     State.Bug << "SeekFood" << endl;
     SeekFood();
+
+    State.Bug << "Do Tasks" << endl;
+    DoTasks();
+
     State.Bug << "ExploreFog" << endl;
     ExploreFog();
+
+    State.Bug << "ClearFinishedTasks" << endl;
+    ClearFinishedTasks();
+
     State.Bug << "FinalMove" << endl;
     int offset;
     int direction;
@@ -311,7 +464,7 @@ void Bot::ExploreFog()
 // and registers move info in ant
 void Bot::MakeMove(Ant* ant)
 {
-    State.Bug << "MAKE MOVE ant of ID " << ant->Id << endl;
+    // State.Bug << "MAKE MOVE ant of ID " << ant->Id << endl;
     if (ant->MoveDirection == -1)
     {
         ant->NextLocation = ant->CurrentLocation;
@@ -334,7 +487,7 @@ void Bot::MakeMove(Ant* ant)
     else
     {
         cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[ant->MoveDirection] << endl;
-        State.Bug << "Moving ant of ID " << ant->Id << " to " << nLoc.Row << "/" << nLoc.Col << endl;
+        // State.Bug << "Moving ant of ID " << ant->Id << " to " << nLoc.Row << "/" << nLoc.Col << endl;
         ant->NextLocation = nLoc;
         
         State.Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = nullptr;

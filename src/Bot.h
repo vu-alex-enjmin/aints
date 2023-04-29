@@ -1,7 +1,12 @@
 #ifndef BOT_H_
 #define BOT_H_
 
+#include <unordered_map>
+#include <vector>
+
 #include "State.h"
+#include "Location.h"
+#include "GuardHillTask.h"
 
 /*
     This struct represents your bot in the game of Ants
@@ -19,6 +24,9 @@ class Bot
         void EndTurn(); // Indicates to the engine that it has made its moves
 
     private:
+        // std::unordered_map<int, JoinAntTask> _joinAntTasks;
+        // std::unordered_map<Location, AttackHillTask> _attackHillTasks;
+        std::vector<GuardHillTask> _guardHillTasks;
         // Ants which are currently blocked by other ants (key is blocking ant's ID, value is blocked ant)
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
 
@@ -27,6 +35,12 @@ class Bot
         void ExploreFog();
         void DestroyOtherHills();
         void Combat();
+
+        // Create and assign tasks to ants
+        void InitializeTasks();
+        // Make Ants perform tasks
+        void DoTasks();
+        void ClearFinishedTasks();
 };
 
 #endif // BOT_H_
