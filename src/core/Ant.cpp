@@ -1,7 +1,8 @@
 #include "Ant.h"
 
 Ant::Ant(int team, Location location)
-    : Team(team)
+    : TaskAgent() 
+    , Team(team)
     , CurrentLocation(location)
     , Decided(false)
     , MoveDirection(-1)

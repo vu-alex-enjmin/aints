@@ -1,49 +1,72 @@
 #include "Task.h"
 
-#include "TaskBoard.h"
+#include <limits>
 #include "TaskAgent.h"
+
+using namespace std;
 
 unsigned int Task::_nextId = 0;
 
-Task::Task(int priority)
+Task::Task()
     : _id(_nextId++)
-    , Priority(priority)
-    , _board(nullptr)
+    , _completed(false)
     , _assignee(nullptr)
+    , _candidateFitnessPairs()
 {
-
+    _candidateFitnessPairs.reserve(4);
 }
 
-void Task::SetBoard(TaskBoard* board)
+void Task::SetAsCompleted()
 {
-    _board = board;
+    _completed = true;
 }
 
-void Task::AssignTo(TaskAgent* agent)
+void Task::AddCandidate(TaskAgent *candidate)
 {
-    _assignee = agent;
-    agent->SetTask(this);
-    _board->SetAssigned(this);
+    auto test = pair(candidate, EvaluateCandidate(candidate));
+    _candidateFitnessPairs.push_back(test);
 }
 
-void Task::FreeUp()
+void Task::SelectCandidate()
 {
-    _assignee = nullptr;
-    _board->SetUnassigned(this);
-}
+    // Initialize selection
+    TaskAgent *bestCandidate = nullptr;
+    int bestCandidateFitness = numeric_limits<int>::min();
 
-void Task::Cancel()
-{
-    if (_assignee != nullptr)
+    // Search for candidate with best fitness
+    for (const auto &candidateFitnessPair : _candidateFitnessPairs)
     {
-        _assignee->SetTask(nullptr);
+        // Skip candidates which already have a task assigned
+        if (candidateFitnessPair.first->HasTask())
+            continue;
+
+        if (candidateFitnessPair.second > bestCandidateFitness)
+        {
+            bestCandidate = candidateFitnessPair.first;
+            bestCandidateFitness = candidateFitnessPair.second;
+        }
     }
-    _board->RemoveAndFreeTask(this);
+    
+    if (bestCandidate == nullptr)
+        return;
+
+    // If a best candidate was found, assign task to best candidate
+    bestCandidate->CurrentTask = this;
+    _assignee = bestCandidate;
 }
 
-void Task::Complete()
+void Task::ClearCandidates()
 {
-    _board->RemoveAndFreeTask(this);
+    _candidateFitnessPairs.clear();
+}
+
+void Task::Unassign()
+{
+    if (_assignee == nullptr)
+        return;
+    
+    _assignee->CurrentTask = nullptr;
+    _assignee = nullptr;
 }
 
 bool Task::IsAssigned() const
@@ -51,7 +74,17 @@ bool Task::IsAssigned() const
     return _assignee != nullptr;
 }
 
+bool Task::IsCompleted() const
+{
+    return _completed;
+}
+
 int Task::GetId() const
 {
     return _id;
+}
+
+Task::~Task()
+{
+    Unassign();
 }

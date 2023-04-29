@@ -6,13 +6,9 @@
 class TaskAgent
 {
     public:
+        Task *CurrentTask;
         TaskAgent();
-        void SetTask(Task* task);
-        void FreeTask();
-        void CompleteTask();
-
-    private:
-        Task* _currentTask;
+        bool HasTask() const;
 };
 
 #endif // TASK_AGENT_H_

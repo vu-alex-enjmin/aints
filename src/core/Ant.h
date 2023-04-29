@@ -1,9 +1,10 @@
 #ifndef ANT_H_
 #define ANT_H_
 
+#include "TaskAgent.h"
 #include "Location.h"
 
-struct Ant
+class Ant : public TaskAgent
 {
     public:
         int Team;

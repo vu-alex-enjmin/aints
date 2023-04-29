@@ -1,27 +1,41 @@
 #ifndef TASK_H_
 #define TASK_H_
 
-class TaskBoard;
+#include <vector>
+#include <utility>
+
 class TaskAgent;
 
 class Task
 {
     public:
-        int Priority;
-        Task(int priority = 0);
-        void SetBoard(TaskBoard* board);
-        void AssignTo(TaskAgent* agent);
-        void FreeUp();
-        void Cancel(); // Destroy task from indirect source
-        void Complete(); // Destroy task from agent
+        std::vector<std::pair<TaskAgent*, int>> _candidateFitnessPairs; // TODO : make protected
+
+        Task();
+        ~Task();
+
+        void SetAsCompleted();
+
+        void AddCandidate(TaskAgent *candidate);
+        void SelectCandidate();
+        void ClearCandidates();
+        void Unassign();
         bool IsAssigned() const;
+        bool IsCompleted() const;
         int GetId() const;
+        
+        virtual void GiveOrderToAssignee() = 0;
+        virtual bool IsValid() = 0;
+
+    protected:
+        unsigned int _id;
+        bool _completed;
+        TaskAgent *_assignee;
+
+        virtual int EvaluateCandidate(TaskAgent *candidate) = 0;
 
     private:
         static unsigned int _nextId;
-        const unsigned int _id;
-        TaskBoard* _board;
-        TaskAgent* _assignee;
 };
 
 #endif // TASK_H
