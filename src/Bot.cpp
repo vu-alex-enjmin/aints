@@ -184,6 +184,9 @@ void Bot::MakeMoves()
 
     State.Bug << "Turn " << State.Turn << ":" << endl;
     // State.Bug << State << endl;
+
+    State.Bug << "Compute Armies" << endl;
+    ComputeArmies();
     
     State.Bug << "ClearFinishedTasks" << endl;
     ClearFinishedTasks();
@@ -300,8 +303,6 @@ void Bot::DefendHills()
 
 void Bot::Combat()
 {
-    ComputeArmies();
-
     // Compute combat move for all armies
     for (int i = 0; i < allyGroups.size(); i++)
     {
