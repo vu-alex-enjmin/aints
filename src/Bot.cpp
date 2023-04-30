@@ -69,7 +69,7 @@ void Bot::InitializeGuardHillTasks()
     // Compute wall size
     int antCount = State.AllyAnts.size();
     int wallRange = (3*antCount/5) / (4*State.MyHills.size());
-    int defenseRange = max(5, wallRange+2);
+    int defenseRange = max(5, wallRange);
 
     // Create tasks for wall and retrieve possible candidates for it
     vector<Ant*> wallCandidateAnts;
