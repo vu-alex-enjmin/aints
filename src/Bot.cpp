@@ -69,8 +69,17 @@ void Bot::InitializeGuardHillTasks()
 
     // Compute wall size
     int antCount = State.AllyAnts.size();
-    int wallRange = (3*antCount/5) / (4*State.MyHills.size());
-    int defenseRange = max(5, wallRange);
+    int wallRange;
+    if (antCount > 80)
+    {
+        wallRange = (1*antCount/3) / (4*State.MyHills.size());
+    }
+    else
+    {
+        wallRange = (2*antCount/5) / (4*State.MyHills.size());
+    }
+
+    int defenseRange = max(3, wallRange);
 
     // Create tasks for wall and retrieve possible candidates for it
     vector<Ant*> wallCandidateAnts;
@@ -120,7 +129,7 @@ void Bot::InitializeGuardHillTasks()
         }
         return false;
     };
-    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), defenseRange+2, onVisited, false);
+    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), defenseRange+10, onVisited, false);
 
     for (auto& invaderLocation : _hillInvaderAnts)
     {
@@ -154,19 +163,30 @@ void Bot::InitializeGuardHillTasks()
         task.SelectCandidate();
         task.ClearCandidates();
     }
-    
-    // Get rid of excess candidates
-    
-    while (wallCandidateAnts.size() > _guardHillTasks.size())
-    {
-        wallCandidateAnts.pop_back();
-    }
-    
 
     // Roughly shuffle tasks to prevent huge parts of walls without ants
     for (int i = _guardHillTasks.size() - 1; i > 0; --i)
     {
         swap(_guardHillTasks[i], _guardHillTasks[_guardHillTasks.size() - 1 - (rand() % (i + 1))]);
+    }
+
+    // Get rid of some tasks to allow for free move space inside wall
+    if (wallRange > 2)
+    {
+        int removedWallTasks = (_guardHillTasks.size() * 1) / 8;
+        if (removedWallTasks > 5)
+            removedWallTasks = 5;
+
+        for (int i = 0; i < removedWallTasks; i++)
+        {
+            _guardHillTasks.pop_back();
+        }
+    }
+    
+    // Get rid of excess candidates
+    while (wallCandidateAnts.size() > _guardHillTasks.size())
+    {
+        wallCandidateAnts.pop_back();
     }
 
     // Assign ants to tasks
