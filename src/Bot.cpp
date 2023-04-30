@@ -45,96 +45,103 @@ void Bot::InitializeTasks()
     }
     */
 
-    // Ant Hill Protection ======================================================
-    
+    InitializeGuardHillTasks();
 
-    // Reset Wall
+    /*
+    for (auto &antPair : State.AllyAnts)
+    {
+        State.Bug << "Has Task? " << antPair.second->HasTask() << endl;
+    }
+    */
+}
+
+void Bot::InitializeGuardHillTasks()
+{
+    // Clear previous guard tasks in order to update them
     _guardHillTasks.clear();
-
-    if (State.MyHills.size() <= 0)
+    if (State.MyHills.size() <= 0) // If no hill is still there, there is no need to guard them
         return;
 
+    // Compute wall size
     int antCount = State.AllyAnts.size();
     int wallRange = (3*antCount/5) / (4*State.MyHills.size());
     
-    if (wallRange >= 1)
+    if (wallRange < 1) // If there is not enough ant to make a proper wall, don't create the wall
+        return;
+
+    // Create tasks for wall and retrieve possible candidates for it
+    vector<Ant*> wallCandidateAnts;
+    auto onVisited = [&,this](const Location &location, const int distance)
     {
-        // Create tasks for wall and retrieve possible candidates for it
-        vector<Ant*> wallCandidateAnts;
-        auto onVisited = [&,this](const Location &location, const int distance)
+        Square &visitedSquare = State.Grid[location.Row][location.Col];
+        if (!visitedSquare.IsWater)
         {
-            Square &visitedSquare = State.Grid[location.Row][location.Col];
-            if (!visitedSquare.IsWater)
+            if (distance == wallRange)
             {
-                if (distance == wallRange)
-                {
-                    _guardHillTasks.push_back(GuardHillTask(&State, location));
-                }
-
-                // State.Bug << "Cond1 : " << ((distance <= wallRange)?"true":"false") << "Cond2 : " << ((wallCandidateAnts.size() < _guardHillTasks.size())?"true":"false") << endl;
-                if ((distance <= wallRange) || (wallCandidateAnts.size() < _guardHillTasks.size()))
-                {
-                    /*
-                    State.Bug << "Enter " << location.Row << "," << location.Col << " " << (visitedSquare.Ant != nullptr);
-                    if (visitedSquare.Ant != nullptr)
-                    {
-                        State.Bug << " " << (visitedSquare.Ant->Team == 0) << " " << (!visitedSquare.Ant->HasTask());
-                    }
-                    State.Bug << endl;
-                    */
-
-                    if ((visitedSquare.Ant != nullptr) && 
-                        (visitedSquare.Ant->Team == 0) && 
-                        (!visitedSquare.Ant->HasTask()))
-                    {
-                        wallCandidateAnts.push_back(visitedSquare.Ant);
-                        // State.Bug << "New Candidate " << location.Row << "," << location.Col << endl;
-                    }
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                _guardHillTasks.push_back(GuardHillTask(&State, location));
             }
-            return false;
-        };
-        
-        State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), wallRange+2, onVisited, false);
 
-        while (wallCandidateAnts.size() > _guardHillTasks.size())
-        {
-            wallCandidateAnts.pop_back();
-        }
-
-        // Roughly shuffle tasks to prevent huge parts of walls without ants
-        for (int i = _guardHillTasks.size() - 1; i > 0; --i)
-        {
-            swap(_guardHillTasks[i], _guardHillTasks[_guardHillTasks.size() - 1 - (rand() % (i + 1))]);
-        }
-
-        // Assign ants to tasks
-        int j = 0;
-        for (auto &task : _guardHillTasks)
-        {
-            // State.Bug << "ASSIGN TASK " << j++ << " Candidate Count : " << wallCandidateAnts.size() << endl;
-            for (auto wallCandidate : wallCandidateAnts)
+            // State.Bug << "Cond1 : " << ((distance <= wallRange)?"true":"false") << "Cond2 : " << ((wallCandidateAnts.size() < _guardHillTasks.size())?"true":"false") << endl;
+            if ((distance <= wallRange) || (wallCandidateAnts.size() < _guardHillTasks.size()))
             {
-                task.AddCandidate(wallCandidate);
+                /*
+                State.Bug << "Enter " << location.Row << "," << location.Col << " " << (visitedSquare.Ant != nullptr);
+                if (visitedSquare.Ant != nullptr)
+                {
+                    State.Bug << " " << (visitedSquare.Ant->Team == 0) << " " << (!visitedSquare.Ant->HasTask());
+                }
+                State.Bug << endl;
+                */
+
+                if ((visitedSquare.Ant != nullptr) && 
+                    (visitedSquare.Ant->Team == 0) && 
+                    (!visitedSquare.Ant->HasTask()))
+                {
+                    wallCandidateAnts.push_back(visitedSquare.Ant);
+                    // State.Bug << "New Candidate " << location.Row << "," << location.Col << endl;
+                }
+                return false;
             }
-            
-            // State.Bug << "Select Candidate" << endl;
-            task.SelectCandidate();
-            task.ClearCandidates();
+            else
+            {
+                return true;
+            }
         }
-        
-        /*
-        for (auto &antPair : State.AllyAnts)
-        {
-            State.Bug << "Has Task? " << antPair.second->HasTask() << endl;
-        }
-        */
+        return false;
+    };
+    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), wallRange+2, onVisited, false);
+
+    // Get rid of excess candidates
+    while (wallCandidateAnts.size() > _guardHillTasks.size())
+    {
+        wallCandidateAnts.pop_back();
     }
+
+    // Roughly shuffle tasks to prevent huge parts of walls without ants
+    for (int i = _guardHillTasks.size() - 1; i > 0; --i)
+    {
+        swap(_guardHillTasks[i], _guardHillTasks[_guardHillTasks.size() - 1 - (rand() % (i + 1))]);
+    }
+
+    // Assign ants to tasks
+    int j = 0;
+    for (auto &task : _guardHillTasks)
+    {
+        // State.Bug << "ASSIGN TASK " << j++ << " Candidate Count : " << wallCandidateAnts.size() << endl;
+        for (auto wallCandidate : wallCandidateAnts)
+        {
+            task.AddCandidate(wallCandidate);
+        }
+        
+        // State.Bug << "Select Candidate" << endl;
+        task.SelectCandidate();
+        task.ClearCandidates();
+    }
+}
+
+void Bot::InitializeAllyReinforcementTasks()
+{
+    
 }
 
 void Bot::DoTasks()
@@ -282,11 +289,6 @@ void Bot::SeekFood()
     {
         MoveClosestAvailableAntTowards(foodLoc, (int)State.ViewRadius);
     }
-}
-
-void Bot::CallAllies()
-{
-    
 }
 
 void Bot::DestroyOtherHills()

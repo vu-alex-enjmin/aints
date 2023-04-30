@@ -39,7 +39,6 @@ class Bot
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
         void SeekFood();
         void ExploreFog();
-        void CallAllies();
         void DestroyOtherHills();
         void DefendHills();
         void Combat();
@@ -47,6 +46,9 @@ class Bot
 
         // Create and assign tasks to ants
         void InitializeTasks();
+        void InitializeGuardHillTasks();
+        void InitializeAllyReinforcementTasks();
+
         // Make Ants perform tasks
         void DoTasks();
         void ClearFinishedTasks();
