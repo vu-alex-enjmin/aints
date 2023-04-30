@@ -15,6 +15,9 @@ Ant::Ant(int team, Location location)
 
 void Ant::SetMoveDirection(int moveDirection)
 {
+    if (Decided)
+        return;
+    
     MoveDirection = moveDirection;
     Decided = true;
 }

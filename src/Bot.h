@@ -8,6 +8,7 @@
 #include "Location.h"
 #include "GuardHillTask.h"
 #include "ReachLocationTask.h"
+#include "ReachAntTask.h"
 #include "CombatEvaluator.h"
 
 /*
@@ -31,10 +32,9 @@ class Bot
         std::vector<std::unordered_set<Location, Location>> allyGroups; // Groups of allies
         std::vector<std::unordered_set<Location, Location>> enemyGroups; // Groups of enemies opposing each ally group (same size as allyGroups)
 
-        // std::unordered_map<int, JoinAntTask> _joinAntTasks;
-        // std::unordered_map<Location, AttackHillTask> _attackHillTasks;
         std::vector<GuardHillTask> _guardHillTasks;
         std::vector<ReachLocationTask> _defendHillTasks;
+        std::unordered_map<int, std::vector<ReachAntTask*>> _allyReinforcementTasks;
         // Ants which are currently blocked by other ants (key is blocking ant's ID, value is blocked ant)
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
         std::vector<Location> _hillInvaderAnts; // Ants that are in the guardHill walls

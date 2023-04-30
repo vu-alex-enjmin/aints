@@ -6,6 +6,14 @@ TaskAgent::TaskAgent()
 
 }
 
+TaskAgent::~TaskAgent()
+{
+    if (CurrentTask == nullptr)
+        return;
+    
+    CurrentTask->Unassign();
+}
+
 bool TaskAgent::HasTask() const
 {
     return CurrentTask != nullptr;

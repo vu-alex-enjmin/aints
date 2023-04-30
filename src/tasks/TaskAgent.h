@@ -8,6 +8,7 @@ class TaskAgent
     public:
         Task *CurrentTask;
         TaskAgent();
+        ~TaskAgent();
         bool HasTask() const;
 };
 

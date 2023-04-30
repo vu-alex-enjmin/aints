@@ -9,8 +9,6 @@ class TaskAgent;
 class Task
 {
     public:
-        std::vector<std::pair<TaskAgent*, int>> _candidateFitnessPairs; // TODO : make protected
-
         Task();
         ~Task();
 
@@ -31,6 +29,7 @@ class Task
         unsigned int _id;
         bool _completed;
         TaskAgent *_assignee;
+        std::vector<std::pair<TaskAgent*, int>> _candidateFitnessPairs;
 
         virtual int EvaluateCandidate(TaskAgent *candidate) = 0;
 
