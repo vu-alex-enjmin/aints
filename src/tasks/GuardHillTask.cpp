@@ -1,6 +1,8 @@
 #include "GuardHillTask.h"
 
 #include <limits>
+#include <vector>
+
 #include "TaskAgent.h"
 
 using namespace std;

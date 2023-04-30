@@ -1,8 +1,6 @@
 #ifndef GUARD_HILL_TASK_H_
 #define GUARD_HILL_TASK_H_
 
-#include <unordered_map>
-
 #include "AntTask.h"
 #include "Location.h"
 #include "Square.h"
