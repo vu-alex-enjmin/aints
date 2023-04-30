@@ -393,14 +393,14 @@ void Bot::MakeMoves()
             task.GiveOrderToAssignee();
     }
 
+    State.Bug << "SeekFood" << endl;
+    SeekFood();
+
     State.Bug << "Combat" << endl;
     Combat();
 
     State.Bug << "DestroyOtherHills" << endl; 
     DestroyOtherHills();
-
-    State.Bug << "SeekFood" << endl;
-    SeekFood();
 
     State.Bug << "Do Tasks" << endl;
     DoTasks();
