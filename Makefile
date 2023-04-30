@@ -3,11 +3,11 @@ CFLAGS=-static -O3 -funroll-loops -c
 LDFLAGS=-static -O2 -lm
 
 SRC_DIR=src/
+SRC_SUB_DIRS=core util tasks combat
 OBJ_DIR=obj/
 EXE_DIR=build/
 
 SOURCES=$(wildcard $(SRC_DIR)**/*.cpp) $(wildcard $(SRC_DIR)*.cpp)
-SRC_SUB_DIRS=core util tasks
 OBJECTS=$(patsubst ${SRC_DIR}%.cpp,${OBJ_DIR}%.o,$(SOURCES))
 EXECUTABLE=$(EXE_DIR)MyBot
 
