@@ -39,12 +39,14 @@ class Bot
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
         std::vector<Location> _hillInvaderAnts; // Ants that are in the guardHill walls
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
+        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts);
         void SeekFood();
         void ExploreFog();
         void DestroyOtherHills();
         void DefendHills();
         void Combat();
         void ComputeArmies();
+        void ApproachEnemies();
 
         // Create and assign tasks to ants
         void InitializeTasks();

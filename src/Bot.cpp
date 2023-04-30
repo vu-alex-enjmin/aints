@@ -265,6 +265,9 @@ void Bot::MakeMoves()
     State.Bug << "Do Tasks" << endl;
     DoTasks();
 
+    State.Bug << "ApproachEnemies" << endl;
+    ApproachEnemies();
+
     State.Bug << "ExploreFog" << endl;
     ExploreFog();
 
@@ -513,6 +516,37 @@ void Bot::ExploreFog()
                 "/" << ant->CurrentLocation.Col << "already decided" << endl;
         }
     }
+}
+
+void Bot::ApproachEnemies()
+{
+    for (const Location &enemy : State.EnemyAnts)
+    {
+        MoveClosestAvailableAntsTowards(enemy, State.AttackRadius+4, 3);
+    }
+}
+
+
+void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts)
+{
+    int currentAnts = 0;
+    State.MultiBreadthFirstSearchAll(
+        vector<Location>(1,targetLocation),
+        searchRadius,
+        [&](const Location& location, int distance, int outDirection)
+        {
+            if ((State.Grid[location.Row][location.Col].Ant != nullptr) &&
+                (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
+                (!State.Grid[location.Row][location.Col].Ant->Decided))
+            {
+                State.Grid[location.Row][location.Col].Ant->SetMoveDirection(outDirection);
+                currentAnts++;
+                State.Bug << "ATTACK" << endl;
+                return (currentAnts >= maxAnts);
+            }
+            return false;
+        }
+    );
 }
 
 // outputs move information to the engine
