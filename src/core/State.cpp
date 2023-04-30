@@ -427,6 +427,24 @@ double State::ManhattanDistance(const Location &loc1, const Location &loc2)
     return bestRowDist + bestColDist;
 }
 
+// Calculate middle point while taking wrapping into account
+Location State::GetMiddlePoint(const Location& loc1, const Location& loc2)
+{
+    Location midPoint = Location(
+        (abs(loc1.Row - loc2.Row) < Rows - abs(loc1.Row - loc2.Row)) ?
+            (loc1.Row + loc2.Row)/2  :
+            ((loc1.Row + Rows + loc2.Row) / 2) % Rows
+        ,
+        (abs(loc1.Col - loc2.Col) < Cols - abs(loc1.Col - loc2.Col)) ?
+            (loc1.Col + loc2.Col)/2  :
+            ((loc1.Col + Cols + loc2.Col) / 2) % Cols
+        );
+    
+    Bug << "Middle ("<< loc1.Row<<"/"<< loc1.Col<<") & ("<< loc2.Row<<"/"<< loc2.Col<<") = ("<< midPoint.Row<<"/"<< midPoint.Col<<")"<< endl;
+    
+    return midPoint;
+}
+
 /*
     This is the output function for a state. It will add a char map
     representation of the state to the output stream passed to it.

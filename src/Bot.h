@@ -7,6 +7,7 @@
 #include "State.h"
 #include "Location.h"
 #include "GuardHillTask.h"
+#include "ReachLocationTask.h"
 #include "CombatEvaluator.h"
 
 /*
@@ -33,9 +34,10 @@ class Bot
         // std::unordered_map<int, JoinAntTask> _joinAntTasks;
         // std::unordered_map<Location, AttackHillTask> _attackHillTasks;
         std::vector<GuardHillTask> _guardHillTasks;
+        std::vector<ReachLocationTask> _defendHillTasks;
         // Ants which are currently blocked by other ants (key is blocking ant's ID, value is blocked ant)
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
-
+        std::vector<Location> _hillInvaderAnts; // Ants that are in the guardHill walls
         void MoveClosestAvailableAntTowards(const Location &targetLocation, int searchRadius);
         void SeekFood();
         void ExploreFog();

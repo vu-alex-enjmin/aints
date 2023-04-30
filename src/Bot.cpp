@@ -59,30 +59,33 @@ void Bot::InitializeGuardHillTasks()
 {
     // Clear previous guard tasks in order to update them
     _guardHillTasks.clear();
-    if (State.MyHills.size() <= 0) // If no hill is still there, there is no need to guard them
+    _defendHillTasks.clear();
+    _hillInvaderAnts.clear();
+
+    // If no hill is still there, or not enough ants, no need to guard them
+    if (State.MyHills.size() <= 0 || State.AllyAnts.size() < State.MyHills.size()*2)
         return;
 
     // Compute wall size
     int antCount = State.AllyAnts.size();
     int wallRange = (3*antCount/5) / (4*State.MyHills.size());
-    
-    if (wallRange < 1) // If there is not enough ant to make a proper wall, don't create the wall
-        return;
+    int defenseRange = max(5, wallRange+2);
 
     // Create tasks for wall and retrieve possible candidates for it
     vector<Ant*> wallCandidateAnts;
+
     auto onVisited = [&,this](const Location &location, const int distance)
     {
         Square &visitedSquare = State.Grid[location.Row][location.Col];
         if (!visitedSquare.IsWater)
         {
-            if (distance == wallRange)
+            if (distance == wallRange && wallRange > 0)
             {
                 _guardHillTasks.push_back(GuardHillTask(&State, location));
             }
 
             // State.Bug << "Cond1 : " << ((distance <= wallRange)?"true":"false") << "Cond2 : " << ((wallCandidateAnts.size() < _guardHillTasks.size())?"true":"false") << endl;
-            if ((distance <= wallRange) || (wallCandidateAnts.size() < _guardHillTasks.size()))
+            if ((distance <= defenseRange) || (wallCandidateAnts.size() < _guardHillTasks.size()))
             {
                 /*
                 State.Bug << "Enter " << location.Row << "," << location.Col << " " << (visitedSquare.Ant != nullptr);
@@ -93,12 +96,19 @@ void Bot::InitializeGuardHillTasks()
                 State.Bug << endl;
                 */
 
-                if ((visitedSquare.Ant != nullptr) && 
-                    (visitedSquare.Ant->Team == 0) && 
-                    (!visitedSquare.Ant->HasTask()))
+                if (visitedSquare.Ant != nullptr) 
                 {
-                    wallCandidateAnts.push_back(visitedSquare.Ant);
-                    // State.Bug << "New Candidate " << location.Row << "," << location.Col << endl;
+                    if ((visitedSquare.Ant->Team == 0) && 
+                        (!visitedSquare.Ant->HasTask()))
+                    {
+                        wallCandidateAnts.push_back(visitedSquare.Ant);
+                        // State.Bug << "New Candidate " << location.Row << "," << location.Col << endl;
+                    }
+                    else
+                    {
+                        if(visitedSquare.Ant->Team > 0)
+                            _hillInvaderAnts.push_back(Location(location));
+                    }
                 }
                 return false;
             }
@@ -109,13 +119,48 @@ void Bot::InitializeGuardHillTasks()
         }
         return false;
     };
-    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), wallRange+2, onVisited, false);
+    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), defenseRange+2, onVisited, false);
 
+    for (auto& invaderLocation : _hillInvaderAnts)
+    {
+        Location closestHill;
+        int closestDist = State.Rows+State.Cols;
+
+        for(auto& hill : State.MyHills)
+        {
+            if(State.ManhattanDistance(invaderLocation, hill) < closestDist)
+            {
+                closestHill = hill;
+                closestDist = State.ManhattanDistance(invaderLocation, hill);
+            }
+        }
+
+        Location midPoint = State.GetMiddlePoint(closestHill, invaderLocation);
+        if (!State.Grid[midPoint.Row][midPoint.Col].IsWater)
+            _defendHillTasks.push_back(ReachLocationTask(&State, invaderLocation));
+    }
+
+    
+    for (auto &task : _defendHillTasks)
+    {
+        // State.Bug << "ASSIGN TASK " << j++ << " Candidate Count : " << wallCandidateAnts.size() << endl;
+        for (auto wallCandidate : wallCandidateAnts)
+        {
+            task.AddCandidate(wallCandidate);
+        }
+        
+        // State.Bug << "Select Candidate" << endl;
+        task.SelectCandidate();
+        task.ClearCandidates();
+    }
+    
     // Get rid of excess candidates
+    
     while (wallCandidateAnts.size() > _guardHillTasks.size())
     {
         wallCandidateAnts.pop_back();
     }
+    
 
     // Roughly shuffle tasks to prevent huge parts of walls without ants
     for (int i = _guardHillTasks.size() - 1; i > 0; --i)
@@ -201,6 +246,12 @@ void Bot::MakeMoves()
 
     State.Bug << "InitializeTasks" << endl;
     InitializeTasks();
+
+    for (auto &task : _defendHillTasks)
+    {
+        if(task.IsValid() && task.IsAssigned())
+            task.GiveOrderToAssignee();
+    }
 
     State.Bug << "Combat" << endl;
     Combat();
@@ -336,7 +387,8 @@ void Bot::Combat()
         while (!CombatEvaluator.BestMoves.empty())
         {
             pair<Ant*, int> &bestMove = CombatEvaluator.BestMoves.top();
-            State.AllyAnts[bestMove.first->Id]->SetMoveDirection(bestMove.second);
+            if (!State.AllyAnts[bestMove.first->Id]->Decided)
+                State.AllyAnts[bestMove.first->Id]->SetMoveDirection(bestMove.second);
             CombatEvaluator.BestMoves.pop();
         }
     }
