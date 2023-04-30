@@ -8,7 +8,6 @@ class AntTask : public Task
 {
     public:
         AntTask(State *state);
-        ~AntTask();
 
         virtual void GiveOrderToAssignee() override = 0;
         virtual bool IsValid() override = 0;

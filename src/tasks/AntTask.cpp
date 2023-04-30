@@ -6,9 +6,3 @@ AntTask::AntTask(State *state)
 {
     
 }
-
-AntTask::~AntTask()
-{
-    Unassign();
-    _state->Bug << "AntTask Destroyed" << std::endl;
-}
