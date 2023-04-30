@@ -74,7 +74,7 @@ void Bot::InitializeGuardHillTasks()
     // Create tasks for wall and retrieve possible candidates for it
     vector<Ant*> wallCandidateAnts;
 
-    auto onVisited = [&,this](const Location &location, const int distance)
+    auto onVisited = [&,this](const Location &location, const int distance, const int outDirection)
     {
         Square &visitedSquare = State.Grid[location.Row][location.Col];
         if (!visitedSquare.IsWater)

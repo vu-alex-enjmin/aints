@@ -312,14 +312,14 @@ void State::CircularBreadthFirstSearchAll(const Location &startLoc, int range2, 
     }
 }
 
-void State::MultiBreadthFirstSearchAll(const std::vector<Location> &startLocs, int range, function<bool(const Location&, const int)> const &onVisited, bool ignoreWater)
+void State::MultiBreadthFirstSearchAll(const std::vector<Location> &startLocs, int range, function<bool(const Location&, const int, const int)> const &onVisited, bool ignoreWater)
 {
     std::queue<Location> locQueue;
 
     std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
      for(auto startLoc : startLocs)
      {
-        if (onVisited(startLoc, 0))
+        if (onVisited(startLoc, 0, -1))
         {
             return;
         }
@@ -343,7 +343,7 @@ void State::MultiBreadthFirstSearchAll(const std::vector<Location> &startLocs, i
                 (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
                 (nextDist <= range))
             {
-                if (onVisited(nextLoc, nextDist))
+                if (onVisited(nextLoc, nextDist, (d + TDIRECTIONS / 2) % TDIRECTIONS))
                 {
                     return;
                 }
