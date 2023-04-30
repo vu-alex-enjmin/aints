@@ -70,13 +70,14 @@ void Bot::InitializeGuardHillTasks()
     // Compute wall size
     int antCount = State.AllyAnts.size();
     int wallRange;
-    if (antCount > 80)
+
+    if (antCount > (80 * State.MyHills.size()))
     {
-        wallRange = (1*antCount/3) / (4*State.MyHills.size());
+        wallRange = (antCount - 25) / (4*State.MyHills.size());
     }
-    else
+    else 
     {
-        wallRange = (2*antCount/5) / (4*State.MyHills.size());
+        wallRange = (1*antCount/4) / (4*State.MyHills.size());
     }
 
     int defenseRange = max(3, wallRange);
@@ -173,9 +174,9 @@ void Bot::InitializeGuardHillTasks()
     // Get rid of some tasks to allow for free move space inside wall
     if (wallRange > 2)
     {
-        int removedWallTasks = (_guardHillTasks.size() * 1) / 8;
-        if (removedWallTasks > 5)
-            removedWallTasks = 5;
+        int removedWallTasks = (_guardHillTasks.size() * 1) / 16;
+        if (removedWallTasks > 4)
+            removedWallTasks = 4;
 
         for (int i = 0; i < removedWallTasks; i++)
         {
@@ -489,7 +490,7 @@ void Bot::SeekFood()
         antLocation = State.BreadthFirstSearch(
             foodLoc,
             &direction, 
-            1.5 * State.ViewRadius,
+            1.25 * State.ViewRadius,
             [this](const Location& location)
             {
                 if((State.Grid[location.Row][location.Col].Ant != nullptr) &&
@@ -613,7 +614,7 @@ void Bot::ComputeArmies()
     for (const Location &antLoc : State.EnemyAnts)
     {
         allyGroup.clear();
-        State.CircularBreadthFirstSearchAll(antLoc, (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01), onVisited, false);
+        State.CircularBreadthFirstSearchAll(antLoc, (State.AttackRadius + 1.75) * (State.AttackRadius + 1.75), onVisited, false);
         
         if (allyGroup.size() > 0)
         {
