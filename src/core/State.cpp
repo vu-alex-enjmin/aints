@@ -54,7 +54,7 @@ void State::Reset()
         ant = antPair.second;
         // Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
         // Apply move to ant for next turn
-        if(ant->Decided)
+        if (ant->Decided)
         {
             ant->CurrentLocation = ant->NextLocation;
             ant->NextLocation = Location(-1,-1);
@@ -570,9 +570,9 @@ istream& operator>>(istream &is, State &state)
                 {
                     try
                     {
-                        state.Bug << "Dead ID - "<<
-                        state.Grid[row][col].Ant->Id << " "
-                        << row << "/" << col << endl;
+                        state.Bug << "Dead ID - " << 
+                            state.Grid[row][col].Ant->Id << " " << 
+                            row << "/" << col << endl;
 
                         ant = state.AllyAnts.at( state.Grid[row][col].Ant->Id );
                         state.AllyAnts.erase(ant->Id);
@@ -581,9 +581,10 @@ istream& operator>>(istream &is, State &state)
                     }
                     catch (const exception & e) 
                     {
-                        state.Bug << "Dead "<< e.what() << ": ID - "<<
-                        state.Grid[row][col].Ant->Id << " "
-                        << row << "/" << col << endl;
+                        state.Bug << "Dead "<< 
+                            e.what() << ": ID - " << 
+                            state.Grid[row][col].Ant->Id << " " << 
+                            row << "/" << col << endl;
                     }
 
                     state.Grid[row][col].Ant = nullptr;

@@ -475,14 +475,22 @@ void Bot::MakeMove(Ant* ant)
     Square &nextSquare = State.Grid[nLoc.Row][nLoc.Col];
     if (nextSquare.IsFood)
     {
-        // State.Bug << "Food Blocked Ant";
+        // State.Bug << "Food Blocked Ant" << endl;
         // Do not move if going towards food (food has collisions)
         ant->NextLocation = ant->CurrentLocation;
     }
-    else if ((nextSquare.Ant != nullptr) && (nextSquare.Ant->Team == 0))
+    else if (nextSquare.Ant != nullptr)
     {
-        // State.Bug << "Blocked Ant";
-        _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
+        if (nextSquare.Ant->Team == 0)
+        {
+            // State.Bug << "Ally Blocked Ant" << endl;
+            _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
+        }
+        // else
+        // {
+        //     State.Bug << "Enemy Blocked Ant" << endl;
+        // }
+
         ant->NextLocation = ant->CurrentLocation;
     }
     else
