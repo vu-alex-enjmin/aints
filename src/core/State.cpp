@@ -39,7 +39,6 @@ void State::Reset()
     Bug << "Reset 2" << endl;
     EnemyAnts.clear();
     Food.clear();
-    NewlyDeadAllyAnts.clear();
 
     Bug << "Reset 3" << endl;
     for(int row = 0; row < Rows; row++)
@@ -281,7 +280,7 @@ Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, 
     return Location(-1, -1);
 }
 
-void State::BreadthFirstSearchAll(const Location &startLoc, int range, function<void(const Location&)> const &onVisited, bool ignoreWater)
+void State::CircularBreadthFirstSearchAll(const Location &startLoc, int range2, function<void(const Location&)> const &onVisited, bool ignoreWater)
 {
     std::queue<Location> locQueue;
     locQueue.push(startLoc);
@@ -303,7 +302,7 @@ void State::BreadthFirstSearchAll(const Location &startLoc, int range, function<
 
             if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
                 (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
-                (nextDist <= range))
+                (Distance2(nextLoc, startLoc) <= (range2)))
             {
                 onVisited(nextLoc);
                 locQueue.push(nextLoc);

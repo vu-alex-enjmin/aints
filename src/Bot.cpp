@@ -287,7 +287,7 @@ void Bot::SeekFood()
 {
     for (const Location &foodLoc : State.Food)
     {
-        MoveClosestAvailableAntTowards(foodLoc, (int)State.ViewRadius);
+        MoveClosestAvailableAntTowards(foodLoc, (int)(1.25 * State.ViewRadius));
     }
 }
 
@@ -368,7 +368,7 @@ void Bot::ComputeArmies()
     for (const Location &antLoc : State.EnemyAnts)
     {
         allyGroup.clear();
-        State.BreadthFirstSearchAll(antLoc, State.AttackRadius + 3, onVisited, true);
+        State.CircularBreadthFirstSearchAll(antLoc, (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01), onVisited, true);
         
         if (allyGroup.size() > 0)
         {

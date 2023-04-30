@@ -308,6 +308,6 @@ int CombatEvaluator::EvaluateCurrentCombatState()
     }
 
     //GameState->Bug << "Evaluate : " << ((enemyDeathCount * 10) - (allyDeathCount * 15)) << endl;
-    
-    return (enemyDeathCount * 10) - (allyDeathCount * 15); 
+
+    return (enemyDeathCount * 10) - (allyDeathCount * 13); 
 }
