@@ -478,9 +478,60 @@ void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const i
 
 void Bot::SeekFood()
 {
+    unordered_map<Location, vector<Location>, Location> antsToFoods;
+    unordered_map<Location, vector<int>, Location> antDirections; 
     for (const Location &foodLoc : State.Food)
     {
-        MoveClosestAvailableAntTowards(foodLoc, (int)(1.25 * State.ViewRadius));
+         State.Bug << "For Food "<< foodLoc.Row<< "/"<<foodLoc.Col << endl;
+        int direction;
+        Location antLocation;
+
+        antLocation = State.BreadthFirstSearch(
+            foodLoc,
+            &direction, 
+            1.5 * State.ViewRadius,
+            [this](const Location& location)
+            {
+                if((State.Grid[location.Row][location.Col].Ant != nullptr) &&
+                    (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
+                    (!State.Grid[location.Row][location.Col].Ant->Decided))
+                        State.Bug << "Closest Ant is " << location.Row<< "/"<<location.Col << endl;
+                return 
+                    (State.Grid[location.Row][location.Col].Ant != nullptr) &&
+                    (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
+                    (!State.Grid[location.Row][location.Col].Ant->Decided);
+            }
+        );
+
+        if (!(antLocation == Location(-1,-1)))
+        {
+            antsToFoods[antLocation].push_back(foodLoc);
+            antDirections[antLocation].push_back(direction);
+        }
+        
+        /*
+            MoveClosestAvailableAntTowards(foodLoc, (int)(1.25 * State.ViewRadius));
+        */
+    }
+
+    for(auto& antFoodPair : antsToFoods)
+    {
+        int bestDist = State.Rows+State.Cols;
+        int bestDirection = -1;
+        int dist;
+        State.Bug << "Food Ant at "<< antFoodPair.first.Row<< "/"<<antFoodPair.first.Col << endl;
+        for(int i = 0; i < antFoodPair.second.size(); i++)
+        {
+            dist = State.ManhattanDistance(antFoodPair.first, antFoodPair.second[i]);
+            if(dist < bestDist)
+            {
+                State.Bug << "Food at "<< antFoodPair.second[i].Row<< "/"<<antFoodPair.second[i].Col << "is best" << endl;
+                bestDist = dist;
+                bestDirection = antDirections[antFoodPair.first][i];
+            }
+        }
+        State.Bug << "Best Direction is " << (bestDirection != -1 ? CDIRECTIONS[bestDirection] : 'O') << endl;
+        State.Grid[antFoodPair.first.Row][antFoodPair.first.Col].Ant->SetMoveDirection(bestDirection);
     }
 }
 
