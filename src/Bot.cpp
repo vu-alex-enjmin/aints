@@ -764,14 +764,35 @@ void Bot::MakeMove(Ant* ant)
         if (nextSquare.Ant->Team == 0)
         {
             // State.Bug << "Ally Blocked Ant" << endl;
-            _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
+            auto blockedAntIterator = _antsBlockedByOtherAnts.find(ant->Id);
+            if ((blockedAntIterator != _antsBlockedByOtherAnts.end()) && (blockedAntIterator->second->Id == nextSquare.Ant->Id))
+            {
+                State.Bug << "Swap Ants " << nLoc.Row << ":" << nLoc.Col << " VS " << ant->CurrentLocation.Row << ":" << ant->CurrentLocation.Col << endl;
+
+                Ant* otherAnt = State.Grid[nLoc.Row][nLoc.Col].Ant;
+                cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[ant->MoveDirection] << endl;
+                cout << "o " << otherAnt->CurrentLocation.Row << " " << otherAnt->CurrentLocation.Col << " " << CDIRECTIONS[otherAnt->MoveDirection] << endl;
+                
+                State.Grid[nLoc.Row][nLoc.Col].Ant = ant;
+                State.Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = otherAnt;
+
+                ant->NextLocation = blockedAntIterator->second->CurrentLocation;
+                blockedAntIterator->second->NextLocation = ant->CurrentLocation;
+            }
+            else
+            {
+                _antsBlockedByOtherAnts[nextSquare.Ant->Id] = ant;
+                ant->NextLocation = ant->CurrentLocation;
+            }
+        }
+        else
+        {
+            ant->NextLocation = ant->CurrentLocation;
         }
         // else
         // {
         //     State.Bug << "Enemy Blocked Ant" << endl;
         // }
-
-        ant->NextLocation = ant->CurrentLocation;
     }
     else
     {
@@ -789,6 +810,4 @@ void Bot::MakeMove(Ant* ant)
             MakeMove(blockedAntIterator->second);
         }
     }
-
-    // TODO : check "Ant loops" in its own function 
 }
