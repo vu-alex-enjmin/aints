@@ -7,10 +7,9 @@
 
 using namespace std;
 
-GuardHillTask::GuardHillTask(State *state, Location guardedLocation, Square *hillSquare)
+GuardHillTask::GuardHillTask(State *state, Location guardedLocation)
     : AntTask(state)
     , _guardedLocation(guardedLocation)
-    , _hillSquare(hillSquare)
 {
 
 }
@@ -18,12 +17,7 @@ GuardHillTask::GuardHillTask(State *state, Location guardedLocation, Square *hil
 void GuardHillTask::GiveOrderToAssignee()
 {
     Ant *assignee = (Ant*) _assignee;
-    
-    // Calcul du next move/direction et du decided
-    
-    // Astar
 
-    // Prendre la premiere direction indiquée par le A*
     std::vector<int> path = _state->AStar(assignee->CurrentLocation, _guardedLocation);
     if(path.size() > 0)
     {
@@ -38,7 +32,7 @@ void GuardHillTask::GiveOrderToAssignee()
 
 bool GuardHillTask::IsValid()
 {
-    return true;
+    return _state->MyHills.size() > 0;
 }
 
 int GuardHillTask::EvaluateCandidate(TaskAgent *candidate) 

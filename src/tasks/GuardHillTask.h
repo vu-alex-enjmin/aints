@@ -8,12 +8,11 @@
 class GuardHillTask : public AntTask
 {
     public:
-        GuardHillTask(State *state, Location guardedLocation, Square *hillSquare);
+        GuardHillTask(State *state, Location guardedLocation);
         virtual void GiveOrderToAssignee() override;
         virtual bool IsValid() override;
 
     protected:
-        Square *_hillSquare;
         Location _guardedLocation;
 
         virtual int EvaluateCandidate(TaskAgent *candidate) override;

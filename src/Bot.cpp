@@ -68,7 +68,7 @@ void Bot::InitializeTasks()
             {
                 if (distance == wallRange)
                 {
-                    _guardHillTasks.push_back(GuardHillTask(&State, location, &visitedSquare));
+                    _guardHillTasks.push_back(GuardHillTask(&State, location));
                 }
 
                 // State.Bug << "Cond1 : " << ((distance <= wallRange)?"true":"false") << "Cond2 : " << ((wallCandidateAnts.size() < _guardHillTasks.size())?"true":"false") << endl;
@@ -142,7 +142,8 @@ void Bot::DoTasks()
     for (auto &antPair : State.AllyAnts)
     {
         if ((!antPair.second->Decided) &&
-            (antPair.second->HasTask()))
+            (antPair.second->HasTask()) &&
+            (antPair.second->CurrentTask->IsValid()))
         {
             antPair.second->CurrentTask->GiveOrderToAssignee();
         }
