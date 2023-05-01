@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <queue>
+#include <cmath>
 #include <algorithm>
 
 #include "WrapGridAlgorithm.h"

@@ -2,18 +2,7 @@
 #define STATE_H_
 
 #include <iostream>
-#include <stdio.h>
-#include <cstdlib>
-#include <cmath>
-#include <string>
-// TODO : cleanup includes in header files
-// TODO : sort includes in all files
-
 #include <vector>
-#include <queue>
-#include <stack>
-#include <stdint.h>
-#include <functional>
 #include <map>
 #include <unordered_set>
 
