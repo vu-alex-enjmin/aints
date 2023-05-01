@@ -36,6 +36,7 @@ void Bot::PlayGame()
     }
 }
 
+// Creates and assign tasks to ants
 void Bot::InitializeTasks()
 {
     /*
@@ -56,6 +57,7 @@ void Bot::InitializeTasks()
     */
 }
 
+// Creates and assign tasks related to guarding and defending the hill
 void Bot::InitializeGuardHillTasks()
 {
     // Clear previous guard tasks in order to update them
@@ -204,6 +206,8 @@ void Bot::InitializeGuardHillTasks()
     }
 }
 
+// Creates and assign All
+// TODO commenter si on l'utilise ou pas
 void Bot::InitializeAllyReinforcementTasks()
 {
     // Create tasks if needed
@@ -294,6 +298,7 @@ void Bot::InitializeAllyReinforcementTasks()
     }
 }
 
+// Makes Ants perform tasks
 void Bot::DoTasks()
 {
     for (auto &antPair : State.AllyAnts)
@@ -307,6 +312,7 @@ void Bot::DoTasks()
     }
 }
 
+// Remove all tasks that are either completed or irrelevant
 void Bot::ClearFinishedTasks()
 {
     // Clear invalid/finished guard hill tasks
@@ -447,6 +453,7 @@ void Bot::MakeMoves()
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
 }
 
+// Orders ants to look for and go towards nearby food
 void Bot::SeekFood()
 {
     unordered_map<Location, vector<Location>, Location> antsToFoods;
@@ -495,6 +502,7 @@ void Bot::SeekFood()
     }
 }
 
+// Orders ants go to hills to destroy them
 void Bot::DestroyOtherHills()
 {
     for (const Location &hillLoc : State.EnemyHills)
@@ -503,6 +511,7 @@ void Bot::DestroyOtherHills()
     }
 }
 
+// Sends ants to protect an ally hill from approaching enemies
 void Bot::DefendHills()
 {
     for (auto &task : _defendHillTasks)
@@ -512,6 +521,7 @@ void Bot::DefendHills()
     }
 }
 
+// Makes groups of allies formed by ComputeArmies() move in order to resolve battles
 void Bot::Combat()
 {
     // Compute combat move for all armies
@@ -551,6 +561,7 @@ void Bot::Combat()
     }
 }
 
+// Identifies occuring battles and groups the allies and enemies of each battle 
 void Bot::ComputeArmies()
 {
     // (Re)initialize ally/enemy groups
@@ -635,7 +646,7 @@ void Bot::EndTurn()
     cout << "go" << endl;
 }
 
-
+// Orders ants to go to places that are in the Fog Of War
 void Bot::ExploreFog()
 {
     int direction;
@@ -667,6 +678,7 @@ void Bot::ExploreFog()
     }
 }
 
+// Orders ants to follow nearby enemies
 void Bot::ApproachEnemies()
 {
     for (const Location &enemy : State.EnemyAnts)
@@ -675,7 +687,8 @@ void Bot::ApproachEnemies()
     }
 }
 
-
+// Orders maxAnts ants in searchRadius to move one step towards targetLocation
+// This general function is used by other functions
 void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts)
 {
     int movedAnts = 0;
