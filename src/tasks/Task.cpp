@@ -13,20 +13,25 @@ Task::Task()
     , _assignee(nullptr)
     , _candidateFitnessPairs()
 {
+    // Allocate memory for at least 4 candidates
     _candidateFitnessPairs.reserve(4);
 }
 
+// Sets the Task as performed and finished successfully
 void Task::SetAsCompleted()
 {
     _completed = true;
 }
 
+// Adds candidate to vector of candidates after calculating its fitness
 void Task::AddCandidate(TaskAgent *candidate)
 {
     auto test = pair(candidate, EvaluateCandidate(candidate));
     _candidateFitnessPairs.push_back(test);
 }
 
+// Finds fittest candidate among current candidates and puts it as assignee
+// (Note that the fittest candidate has the highest fitness value)
 void Task::SelectCandidate()
 {
     // Initialize selection
@@ -55,11 +60,13 @@ void Task::SelectCandidate()
     _assignee = bestCandidate;
 }
 
+// Removes all candidates from vector of candidates
 void Task::ClearCandidates()
 {
     _candidateFitnessPairs.clear();
 }
 
+// Removes task from assignee and remove assignee 
 void Task::Unassign()
 {
     if (_assignee == nullptr)
@@ -69,21 +76,25 @@ void Task::Unassign()
     _assignee = nullptr;
 }
 
+// Checks if the Task has an assignee
 bool Task::IsAssigned() const
 {
     return _assignee != nullptr;
 }
 
+// Checks if Task was previously SetAsCompleted
 bool Task::IsCompleted() const
 {
     return _completed;
 }
 
+// Returns the Task's unique id
 int Task::GetId() const
 {
     return _id;
 }
 
+// Unassigns the Task on destruction
 Task::~Task()
 {
     Unassign();

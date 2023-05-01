@@ -7,11 +7,23 @@ struct State;
 class CombatEvaluator
 {    
     public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+
         State *GameState;
         CombatState *CurrentCombatState;
         std::stack<std::pair<Ant*, int>> BestMoves;
         int BestGain;
         int TotalIterations;
+
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
         CombatEvaluator(State *gameState);
         void ComputeBestMove(CombatState *startingCombatState);

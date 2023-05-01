@@ -10,13 +10,27 @@
 */
 struct Square
 {
-    bool IsWater, IsHill, IsFood;
-    int HillPlayer, TurnsInFog;
-    Ant *Ant;
+    public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+       
+        bool IsWater, IsHill, IsFood;
+        int HillPlayer, TurnsInFog;
+        Ant *Ant;
 
-    Square();
-    // Resets the information for the square except water information
-    void Reset();
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
+
+        Square();
+        // Resets the information for the square except water information
+        void Reset();
 };
 
 #endif // SQUARE_H_

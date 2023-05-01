@@ -15,7 +15,7 @@ INCLUDE_PATHS=$(addprefix -I${SRC_DIR}, $(SRC_SUB_DIRS))
 CFLAGS:=$(INCLUDE_PATHS) $(CFLAGS)
 
 #Uncomment the following to enable debugging
-#CFLAGS+=-g -DDEBUG
+CFLAGS+=-g -DDEBUG
 
 all: $(OBJECTS) $(EXECUTABLE)
 

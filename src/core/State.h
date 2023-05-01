@@ -71,7 +71,9 @@ struct State
     // Check if id is a live ally ant that has not moved yet
     bool IsAvailableAnt(const int id);
 
+    // Update Grid Fog of War information
     void UpdateVisionInformation();
+    // Update information related to Hills' existence
     void UpdateHillInformation();
 };
 

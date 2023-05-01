@@ -28,11 +28,13 @@ void GuardHillTask::GiveOrderToAssignee()
     {
         if(pathDirections.size() > 0)
         {
+            // Make assignee move in the direction of the first A* step towards _guardedLocation
             int firstDirection = pathDirections[0];
             assignee->SetMoveDirection(firstDirection);
         }
         else
         {
+            // Don't move if the ant is already at its destination
             assignee->SetMoveDirection();
         }
     }

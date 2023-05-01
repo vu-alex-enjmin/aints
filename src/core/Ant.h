@@ -7,6 +7,13 @@
 class Ant : public TaskAgent
 {
     public:
+        
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+       
         int Team;
         int Id;
         Location CurrentLocation;
@@ -17,6 +24,13 @@ class Ant : public TaskAgent
         Location NextLocation;
         // Combat/Defense properties
         int SurroundingOpponentCount;
+
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
         Ant(int team, Location location);
 

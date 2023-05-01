@@ -11,8 +11,13 @@
 struct CombatState
 {
     public:
-        CombatState() = default;
-
+        
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+       
         // Moves performed by allies to reach current state
         std::stack<std::pair<Ant*, int>> AlliesPerformedMoves;
         // Allies which have not made their move yet
@@ -23,6 +28,13 @@ struct CombatState
         std::unordered_set<Location, Location> MovedAllyLocations;
         // Location of enemies after they have made their move
         std::unordered_set<Location, Location> MovedEnemyLocations;
-};
 
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
+
+        CombatState() = default;
+};
 #endif // COMBAT_STATE_H_
