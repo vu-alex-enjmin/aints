@@ -8,16 +8,28 @@
 */
 struct Location
 {
-    int Row, Col;
+    public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
 
-    Location();
+        int Row, Col;
 
-    Location(int row, int col);
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
-    bool operator==(const Location &other) const;
-    bool operator!=(const Location &other) const;
+        Location();
+        Location(int row, int col);
 
-    size_t operator()(const Location &toHash) const noexcept;
+        bool operator==(const Location &other) const;
+        bool operator!=(const Location &other) const;
+        size_t operator()(const Location &toHash) const noexcept;
 };
 
 #endif // LOCATION_H_

@@ -17,8 +17,20 @@
 class Bot
 {
     public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+       
         State State;
         CombatEvaluator CombatEvaluator;
+
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
         Bot();
 
@@ -34,7 +46,7 @@ class Bot
     private:
         /*
         =========================================
-            Private attributes
+            Attributes
         =========================================
         */
         // >> Combat management attributes
@@ -61,7 +73,7 @@ class Bot
 
         /*
         =========================================
-            Private methods
+            Methods
         =========================================
         */
         // >> Simple Ant actions (No Tasks required) 

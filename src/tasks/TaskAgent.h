@@ -7,9 +7,21 @@
 class TaskAgent
 {
     public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+       
         // Currently assigned Task
         Task *CurrentTask;
-        
+
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
+
         TaskAgent();
         // Unassigns CurrentTask on destruction
         ~TaskAgent();

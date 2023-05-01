@@ -24,10 +24,11 @@ void ReachLocationTask::GiveOrderToAssignee()
     {
         if (pathDirections.size() > _stopDistance)
         {
+            // Make assignee move in the direction of the first A* step towards _targetLocation
             int firstDirection = pathDirections[0];
             assignee->SetMoveDirection(firstDirection);
         }
-        else
+        else // when the path is shorter than the stopping distance, the task is completed
         {
             assignee->SetMoveDirection();
             _completed = true;

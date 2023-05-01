@@ -7,14 +7,34 @@
 class AntTask : public Task
 {
     public:
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
+
         AntTask(State *state);
 
         virtual void GiveOrderToAssignee() override = 0;
         virtual bool IsValid() override = 0;
 
     protected:
+        
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+
+        // Game's State instance
         State *_state;
 
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
         virtual int EvaluateCandidate(TaskAgent *candidate) override = 0;
 };
 

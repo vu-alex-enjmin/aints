@@ -20,8 +20,22 @@ const int DIRECTIONS[4][2] = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // {N, E, S, 
 class WrapGridAlgorithm
 {
     public:
+        
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+
         static int Rows;
         static int Cols;
+
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
         // Initializes grid size used for all methods
         static void InitializeSize(const int rows, const int cols);
@@ -73,6 +87,14 @@ class WrapGridAlgorithm
         );
 
     private:
+
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
+       
         WrapGridAlgorithm() = default;
 
         // Execute a BFS using a base location queue and a base distances grid
