@@ -8,7 +8,7 @@
 
 using namespace std;
 
-// Constructor
+// Create state while opening Debug logger if needed 
 State::State()
     : GameOver(false)
     , Turn(0)
@@ -16,56 +16,55 @@ State::State()
     Bug.Open("./debug.txt");
 }
 
-// Deconstructor
+// Destroy state while closing Debug logger if needed 
 State::~State()
 {
     Bug.Close();
 }
 
-// Sets the state up
+// Sets the state up, with game start's information
 void State::Setup()
 {
     Grid = vector<vector<Square>>(Rows, vector<Square>(Cols, Square()));
 }
 
-// Resets all non-water squares to land and clears the bots ant vector
+// Resets all unmanaged containers, all non-water squares,
+// and update all managed containers
 void State::Reset()
 {
-    Bug << "Reset 1" << endl;
+    // Reset enemy ants
     for (const Location &enemyLoc : EnemyAnts)
     {
         if (Grid[enemyLoc.Row][enemyLoc.Col].Ant != nullptr)
             delete Grid[enemyLoc.Row][enemyLoc.Col].Ant;
     }
-
-    Bug << "Reset 2" << endl;
     EnemyAnts.clear();
+
+    // Reset food
     Food.clear();
 
-    Bug << "Reset 3" << endl;
+    // Reset grid
     for(int row = 0; row < Rows; row++)
         for(int col = 0; col < Cols; col++)
             if(!Grid[row][col].IsWater)
                 Grid[row][col].Reset();
     
-    Bug << "Reset 4" << endl;
+    // Update ally ants' location
     Ant *ant;
     for (const auto &antPair : AllyAnts)
     {
         ant = antPair.second;
-        // Bug << "Reset Id " << ant->Id << " " << antPair.first << endl;
         // Apply move to ant for next turn
         if (ant->Decided)
         {
             ant->CurrentLocation = ant->NextLocation;
             ant->NextLocation = Location(-1,-1);
             ant->ResetMoveDirection();
-            // Bug << "   Move ant " << ant->Id << " to " << ant->CurrentLocation.Row << "/" << ant->CurrentLocation.Col << endl;
         }
         Grid[ant->CurrentLocation.Row][ant->CurrentLocation.Col].Ant = ant;
-        // Bug << "Reset Done " << ant->Id << endl; 
     }
 }
+
 
 void State::UpdateHillInformation()
 {
@@ -100,25 +99,17 @@ void State::UpdateHillInformation()
     }
 }
 
-/*
-    // TODO : update this function header comment
-
-    This function will update update the lastSeen value for any squares currently
-    visible by one of your live ants.
-
-    BE VERY CAREFUL IF YOU ARE GOING TO TRY AND MAKE THIS FUNCTION MORE EFFICIENT,
-    THE OBVIOUS WAY OF TRYING TO IMPROVE IT BREAKS USING THE EUCLIDEAN METRIC, FOR
-    A CORRECT MORE EFFICIENT IMPLEMENTATION, TAKE A LOOK AT THE GET_VISION FUNCTION
-    IN ANTS.PY ON THE CONTESTS GITHUB PAGE.
-*/
+// Update Grid Fog of War information
 void State::UpdateVisionInformation()
 {
+    // Create function for resetting visible squares' turns in fog to 0
     auto onVisited = [&](const Location& location, int distance, int direction)
     {
         Grid[location.Row][location.Col].TurnsInFog = 0;
         return false;
     };
 
+    // For each square in view radius of ants, reset its turns in fog value
     for (const auto &antPair : AllyAnts)
     {
         Ant *ant = antPair.second;
@@ -133,7 +124,35 @@ void State::UpdateVisionInformation()
     }
 }
 
-// Output function for state, used for representing state inside output stream
+// Checks if pointer points to an ally ant that has not moved yet
+bool State::IsAvailableAnt(const Ant *ant)
+{
+    return (ant != nullptr) && (ant->Team == 0) && (!ant->Decided);
+}
+
+// Checks if location in the Grid is an ally ant that has not moved yet
+bool State::IsAvailableAnt(const Location& location)
+{
+    Ant *ant = Grid[location.Row][location.Col].Ant;
+    return IsAvailableAnt(ant);
+}
+
+// Checks if id is a live ally ant that has not moved yet
+bool State::IsAvailableAnt(const int id)
+{
+    // iterate through AllyAnts to find if the ant exists
+    auto antIterator = AllyAnts.find(id);
+    // when an ant is found, check if it is available
+    if(antIterator != AllyAnts.end())
+    {
+        Ant *ant = antIterator->second;
+        return IsAvailableAnt(ant);
+    }
+    // no ant found
+    return false;
+}
+
+// Output function for state, used for whole game state inside output stream
 ostream& operator<<(ostream &os, const State &state)
 {
     for (int row = 0; row < state.Rows; row++)
@@ -159,7 +178,8 @@ ostream& operator<<(ostream &os, const State &state)
     return os;
 }
 
-// Input function
+// Input function, used to initialize/update state
+// after receiving game information
 istream& operator>>(istream &is, State &state)
 {
     int row, col, player;
@@ -270,17 +290,14 @@ istream& operator>>(istream &is, State &state)
                 {
                     try
                     {
-                        state.Bug << "Dead ID - " << 
-                            state.Grid[row][col].Ant->Id << " " << 
-                            row << "/" << col << endl;
-
+                        // Attempt to erased ally ant from tracked allies if one died
                         ant = state.AllyAnts.at( state.Grid[row][col].Ant->Id );
                         state.AllyAnts.erase(ant->Id);
-
                         delete ant;
                     }
                     catch (const exception & e) 
                     {
+                        // Log error if there is a problem when deleting an ally ant
                         state.Bug << "Dead "<< 
                             e.what() << ": ID - " << 
                             state.Grid[row][col].Ant->Id << " " << 
@@ -295,6 +312,7 @@ istream& operator>>(istream &is, State &state)
                 is >> row >> col >> player;
                 state.Grid[row][col].IsHill = 1;
                 state.Grid[row][col].HillPlayer = player;
+                // Update state's hills info
                 if (player == 0)
                     state.MyHills.insert(Location(row, col));
                 else
@@ -323,32 +341,4 @@ istream& operator>>(istream &is, State &state)
     }
 
     return is;
-}
-
-// Checks if pointer points to an ally ant that has not moved yet
-bool State::IsAvailableAnt(const Ant *ant)
-{
-    return (ant != nullptr) && (ant->Team == 0) && (!ant->Decided);
-}
-
-// Checks if location in the Grid is an ally ant that has not moved yet
-bool State::IsAvailableAnt(const Location& location)
-{
-    Ant *ant = Grid[location.Row][location.Col].Ant;
-    return IsAvailableAnt(ant);
-}
-
-// Checks if id is a live ally ant that has not moved yet
-bool State::IsAvailableAnt(const int id)
-{
-    // iterate through AllyAnts to find if the ant exists
-    auto antIterator = AllyAnts.find(id);
-    // when an ant is found, check if it is available
-    if(antIterator != AllyAnts.end())
-    {
-        Ant *ant = antIterator->second;
-        return IsAvailableAnt(ant);
-    }
-    // no ant found
-    return false;
 }

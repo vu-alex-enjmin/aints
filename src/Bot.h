@@ -11,6 +11,10 @@
 #include "ReachAntTask.h"
 #include "CombatEvaluator.h"
 
+// Move directions, represented by characters.
+// Used for telling game engine of the moves to make. 
+const char CDIRECTIONS[4] = {'N', 'E', 'S', 'W'};
+
 /*
     This struct represents the bot (AI) in the game of Ants
 */
