@@ -13,6 +13,8 @@ Ant::Ant(int team, Location location)
     currentId ++;
 }
 
+// Makes the ant cecide to Move in a direction
+// Ignored when already Decided
 void Ant::SetMoveDirection(int moveDirection)
 {
     if (Decided)
@@ -22,6 +24,7 @@ void Ant::SetMoveDirection(int moveDirection)
     Decided = true;
 }
 
+// Remove the ant's current Move direction and makes it undecided
 void Ant::ResetMoveDirection()
 {
     MoveDirection = -1;
