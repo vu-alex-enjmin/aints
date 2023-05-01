@@ -447,31 +447,6 @@ void Bot::MakeMoves()
     State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
 }
 
-void Bot::MoveClosestAvailableAntTowards(const Location &targetLocation, const int searchRadius)
-{
-    int direction;
-    Location antLocation;
-
-    antLocation = State.BreadthFirstSearch(
-        targetLocation,
-        &direction, 
-        searchRadius,
-        [this](const Location& location)
-        {
-            return 
-                (State.Grid[location.Row][location.Col].Ant != nullptr) &&
-                (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
-                (!State.Grid[location.Row][location.Col].Ant->Decided);
-        }
-    );
-    
-    if (!(antLocation == Location(-1,-1)))
-    {
-        Location newLocation = State.GetLocation(antLocation, direction);
-        State.Grid[antLocation.Row][antLocation.Col].Ant->SetMoveDirection(direction);
-    }
-}
-
 void Bot::SeekFood()
 {
     unordered_map<Location, vector<Location>, Location> antsToFoods;
@@ -524,7 +499,7 @@ void Bot::DestroyOtherHills()
 {
     for (const Location &hillLoc : State.EnemyHills)
     {
-        MoveClosestAvailableAntTowards(hillLoc, (int)(2 * State.ViewRadius));
+        MoveClosestAvailableAntsTowards(hillLoc, (int)(2 * State.ViewRadius));
     }
 }
 
@@ -703,18 +678,17 @@ void Bot::ApproachEnemies()
 
 void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts)
 {
-    int currentAnts = 0;
+    int movedAnts = 0;
     State.MultiBreadthFirstSearchAll(
         vector<Location>(1,targetLocation),
         searchRadius,
-        [&](const Location& location, int distance, int outDirection)
+        [&](const Location& location, int distance, int directionToTake)
         {
             if (State.IsAvailableAnt(location))
             {
-                State.Grid[location.Row][location.Col].Ant->SetMoveDirection(outDirection);
-                currentAnts++;
-                State.Bug << "ATTACK" << endl;
-                return (currentAnts >= maxAnts);
+                State.Grid[location.Row][location.Col].Ant->SetMoveDirection(directionToTake);
+                movedAnts++;
+                return (movedAnts >= maxAnts);
             }
             return false;
         }
