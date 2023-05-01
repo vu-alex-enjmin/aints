@@ -76,6 +76,14 @@ struct State
     // Directions are int values: (0 for 'N', 1 for 'E', 2 for 'S', 3 for 'W')
     std::vector<int> AStar(const Location &startLoc, const Location &targetLoc);
     Location SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange);
+
+    // Check if pointer points to an ally ant that has not moved yet
+    bool IsAvailableAnt(const Ant* ant);
+    // Check if location in the Grid is an ally ant that has not moved yet
+    bool IsAvailableAnt(const Location& location);
+    // Check if id is a live ally ant that has not moved yet
+    bool IsAvailableAnt(const int id);
+
     void UpdateVisionInformation();
     void UpdateHillInformation();
 };

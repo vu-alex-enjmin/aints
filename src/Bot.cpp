@@ -488,14 +488,7 @@ void Bot::SeekFood()
             1.25 * State.ViewRadius,
             [this](const Location& location)
             {
-                if((State.Grid[location.Row][location.Col].Ant != nullptr) &&
-                    (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
-                    (!State.Grid[location.Row][location.Col].Ant->Decided))
-                        State.Bug << "Closest Ant is " << location.Row<< "/"<<location.Col << endl;
-                return 
-                    (State.Grid[location.Row][location.Col].Ant != nullptr) &&
-                    (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
-                    (!State.Grid[location.Row][location.Col].Ant->Decided);
+                return State.IsAvailableAnt(location);
             }
         );
 
@@ -504,10 +497,6 @@ void Bot::SeekFood()
             antsToFoods[antLocation].push_back(foodLoc);
             antDirections[antLocation].push_back(direction);
         }
-        
-        /*
-            MoveClosestAvailableAntTowards(foodLoc, (int)(1.25 * State.ViewRadius));
-        */
     }
 
     for(auto& antFoodPair : antsToFoods)
@@ -601,13 +590,8 @@ void Bot::ComputeArmies()
     unordered_set<Location, Location> allyGroup;
     auto onVisited = [&,this](const Location &location)
     {
-        Square &visitedSquare = State.Grid[location.Row][location.Col];
-        if (visitedSquare.Ant != nullptr &&
-            visitedSquare.Ant->Team == 0 &&
-            !visitedSquare.Ant->Decided)
-        {
+        if (State.IsAvailableAnt(location))
             allyGroup.insert(location);
-        }
     };
     //  Begin search
     for (const Location &antLoc : State.EnemyAnts)
@@ -725,9 +709,7 @@ void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int se
         searchRadius,
         [&](const Location& location, int distance, int outDirection)
         {
-            if ((State.Grid[location.Row][location.Col].Ant != nullptr) &&
-                (State.Grid[location.Row][location.Col].Ant->Team == 0) &&
-                (!State.Grid[location.Row][location.Col].Ant->Decided))
+            if (State.IsAvailableAnt(location))
             {
                 State.Grid[location.Row][location.Col].Ant->SetMoveDirection(outDirection);
                 currentAnts++;

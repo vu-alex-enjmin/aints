@@ -623,3 +623,31 @@ istream& operator>>(istream &is, State &state)
 
     return is;
 }
+
+// Checks if pointer points to an ally ant that has not moved yet
+bool State::IsAvailableAnt(const Ant* ant)
+{
+    return (ant != nullptr) && (ant->Team == 0) && (!ant->Decided);
+}
+
+// Checks if location in the Grid is an ally ant that has not moved yet
+bool State::IsAvailableAnt(const Location& location)
+{
+    Ant* ant = Grid[location.Row][location.Col].Ant;
+    return IsAvailableAnt(ant);
+}
+
+// Checks if id is a live ally ant that has not moved yet
+bool State::IsAvailableAnt(const int id)
+{
+    // iterate through AllyAnts to find if the ant exists
+    auto antIterator = AllyAnts.find(id);
+    // when an ant is found, check if it is available
+    if(antIterator != AllyAnts.end())
+    {
+        Ant* ant = antIterator->second;
+        return IsAvailableAnt(ant);
+    }
+    // no ant found
+    return false;
+}
