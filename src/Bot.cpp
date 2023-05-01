@@ -385,11 +385,8 @@ void Bot::MakeMoves()
     State.Bug << "InitializeTasks" << endl;
     InitializeTasks();
 
-    for (auto &task : _defendHillTasks)
-    {
-        if(task.IsValid() && task.IsAssigned())
-            task.GiveOrderToAssignee();
-    }
+    State.Bug << "DefendHills" << endl;
+    DefendHills();
 
     State.Bug << "SeekFood" << endl;
     SeekFood();
@@ -544,7 +541,11 @@ void Bot::DestroyOtherHills()
 
 void Bot::DefendHills()
 {
-
+    for (auto &task : _defendHillTasks)
+    {
+        if(task.IsValid() && task.IsAssigned())
+            task.GiveOrderToAssignee();
+    }
 }
 
 void Bot::Combat()
