@@ -6,6 +6,7 @@ TaskAgent::TaskAgent()
 
 }
 
+// Unassigns CurrentTask on destruction
 TaskAgent::~TaskAgent()
 {
     if (CurrentTask == nullptr)
@@ -14,6 +15,7 @@ TaskAgent::~TaskAgent()
     CurrentTask->Unassign();
 }
 
+// Checks if CurrentTask points to something
 bool TaskAgent::HasTask() const
 {
     return CurrentTask != nullptr;
