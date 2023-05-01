@@ -8,15 +8,14 @@
 #include "Location.h"
 #include "Ant.h"
 
-/*
-    constants
-*/
+// Constants
+//  Total number of move directions
 const int TDIRECTIONS = 4;
+//  Coordinate offsets for each move direction
 const int DIRECTIONS[4][2] = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // {N, E, S, W}
 
-/*
-    struct to store current state information
-*/
+// Class for all algorithms related to pathfinding, distance computation & finding locations
+// inside a grid which wraps at the edges in the two axii (Row & Column)
 class WrapGridAlgorithm
 {
     public:
@@ -27,7 +26,9 @@ class WrapGridAlgorithm
         =========================================
         */
 
+        // Number of rows of the grid (used for almost all computation)
         static int Rows;
+        // Number of columns of the grid (used for almost all computation)
         static int Cols;
 
         
@@ -45,10 +46,11 @@ class WrapGridAlgorithm
         static int ManhattanDistance(const Location &a, const Location &b);
         // Returns the new location from moving in a given direction with the edges wrapped
         static Location GetLocation(const Location &startLoc, int direction);
+        // Executes the A* algorithm in order to find a path to 'targetLoc' starting from 'startLoc'.
         // If a path is found, pathDirections' content is replaced with the found path's directions
         // The path's directions are int values (0 for 'N', 1 for 'E', 2 for 'S', 3 for 'W')
         // in ascending order of the path (at index 0 is the first direction to follow from startLoc)
-        // Returns whether a path was found
+        // Returns whether a path was found.
         static bool AStar
         (
             const Location &startLoc, 
@@ -57,9 +59,8 @@ class WrapGridAlgorithm
             std::function<bool(const Location&)> const &validLocationPredicate, // (currentLocation) -> isValid
             std::function<int(const Location&, const Location&)> const &heuristic = ManhattanDistance // (startLocation, currentLocation) -> heuristicValue
         );
-
-        // Execute a BFS starting from a single start location, 
-        // within 'range' (Manhattan Distance) of start location
+        // Executes a BFS starting from a single start location, 
+        // within 'range' (Manhattan Distance) of the start location
         static void BreadthFirstSearchSingle
         (
             const Location &startLoc, 
@@ -67,7 +68,7 @@ class WrapGridAlgorithm
             std::function<bool(const Location&)> const &validLocationPredicate, // (currentLocation) -> isValid
             std::function<bool(const Location&, const int, const int)> const &onVisited // (currentLocation, locationDistance, directionTowardStart) -> interruptBfs
         );
-        // Execute a BFS starting from several start locations, 
+        // Executes a BFS starting from several start locations, 
         // within 'range' (Manhattan Distance) of the start locations
         static void BreadthFirstSearchMultiple
         (
@@ -76,8 +77,8 @@ class WrapGridAlgorithm
             std::function<bool(const Location&)> const &validLocationPredicate, // (currentLocation) -> isValid
             std::function<bool(const Location&, const int, const int)> const &onVisited // (currentLocation, locationDistance, directionTowardStart) -> interruptBfs
         );
-        // Execute a BFS starting from a single start location,
-        // within a range of sqrt(radius2) (Euclidian Distance) of start location
+        // Executes a BFS starting from a single start location,
+        // within a range of sqrt(radius2) (Euclidian Distance) of the start location
         static void CircularBreadthFirstSearch
         (
             const Location &startLoc, 
@@ -88,16 +89,15 @@ class WrapGridAlgorithm
 
     private:
 
-        
         /*
         =========================================
             Methods
         =========================================
         */
-       
+        // Prevents creation of a WrapGridAlgorithm instance
         WrapGridAlgorithm() = default;
 
-        // Execute a BFS using a base location queue and a base distances grid
+        // Executes a BFS using a base location queue and a base distances grid
         static void BreadthFirstSearch
         (
             std::queue<Location> &locQueue,

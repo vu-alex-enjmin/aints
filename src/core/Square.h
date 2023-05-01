@@ -16,7 +16,7 @@ struct Square
             Attributes
         =========================================
         */
-        
+       
         // Whether the Square is a known Water tile
         // This information never gets Reset 
         // Unknown tiles (in the Fog Of War) are not Water tiles until discovered
@@ -35,7 +35,7 @@ struct Square
         int TurnsInFog;
         // Info about the Ant that's on the Square
         // = nullptr when there is no Ant
-        Ant* Ant;
+        Ant *Ant;
         
         /*
         =========================================

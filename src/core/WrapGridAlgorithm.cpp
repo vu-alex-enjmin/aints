@@ -6,10 +6,12 @@
 
 using namespace std;
 
+// Number of rows of the grid (used for almost all computation)
 int WrapGridAlgorithm::Rows = 0;
+// Number of columns of the grid (used for almost all computation)
 int WrapGridAlgorithm::Cols = 0;
 
-// Initialize grid size used for all methods
+// Initializes grid size used for all methods
 void WrapGridAlgorithm::InitializeSize(const int rows, const int cols)
 {
     Rows = rows;
@@ -26,6 +28,7 @@ int WrapGridAlgorithm::Distance2(const Location &loc1, const Location &loc2)
     return dr*dr + dc*dc;
 }
 
+// Returns the manhattan distance between two locations with the edges wrapped
 int WrapGridAlgorithm::ManhattanDistance(const Location &loc1, const Location &loc2)
 {
     int rowDist = abs(loc1.Row-loc2.Row);
@@ -44,10 +47,11 @@ Location WrapGridAlgorithm::GetLocation(const Location &loc, int direction)
                      (loc.Col + DIRECTIONS[direction][1] + Cols) % Cols );
 }
 
-// Returns whether a path was found
+
 // If a path is found, pathDirections' content is replaced with the found path's directions
 // The path's directions are int values (0 for 'N', 1 for 'E', 2 for 'S', 3 for 'W')
-// In ascending order of the path (at index 0 is the first direction to follow from startLoc)
+// in ascending order of the path (at index 0 is the first direction to follow from startLoc)
+// Returns whether a path was found.
 bool WrapGridAlgorithm::AStar
 (
     const Location &startLoc, 
@@ -120,6 +124,8 @@ bool WrapGridAlgorithm::AStar
     return false;
 }
 
+// Executes a BFS starting from a single start location, 
+// within 'range' (Manhattan Distance) of the start location
 void WrapGridAlgorithm::BreadthFirstSearchSingle
 (
     const Location &startLoc, 
@@ -140,10 +146,12 @@ void WrapGridAlgorithm::BreadthFirstSearchSingle
     locQueue.push(startLoc);
     distances[startLoc.Row][startLoc.Col] = 0;
 
-    // Execute main BFS Algorithm
+    // Executes main BFS Algorithm
     BreadthFirstSearch(locQueue, distances, range, validLocationPredicate, onVisited);
 }
 
+// Executes a BFS starting from several start locations, 
+// within 'range' (Manhattan Distance) of the start locations
 void WrapGridAlgorithm::BreadthFirstSearchMultiple
 (
     const vector<Location> &startLocs, 
@@ -167,10 +175,12 @@ void WrapGridAlgorithm::BreadthFirstSearchMultiple
         distances[startLoc.Row][startLoc.Col] = 0;
     }
 
-    // Execute main BFS Algorithm
+    // Executes main BFS Algorithm
     BreadthFirstSearch(locQueue, distances, range, validLocationPredicate, onVisited);
 }
 
+// Executes a BFS starting from a single start location,
+// within a range of sqrt(radius2) (Euclidian Distance) of the start location
 void WrapGridAlgorithm::CircularBreadthFirstSearch
 (
     const Location &startLoc, 
@@ -191,11 +201,11 @@ void WrapGridAlgorithm::CircularBreadthFirstSearch
     locQueue.push(startLoc);
     distances[startLoc.Row][startLoc.Col] = 0;
 
-    // Execute main BFS Algorithm
+    // Executes main BFS Algorithm
     Location currLoc, nextLoc;
     int nextDist;
 
-    //    Execute BFS until no more valid locations can be reached
+    //    Executes BFS until no more valid locations can be reached
     while (!locQueue.empty())
     {
         // Retrieve a location
@@ -227,6 +237,7 @@ void WrapGridAlgorithm::CircularBreadthFirstSearch
     }
 }
 
+// Executes a BFS using a base location queue and a base distances grid
 void WrapGridAlgorithm::BreadthFirstSearch
 (
     queue<Location> &locQueue,
@@ -239,7 +250,7 @@ void WrapGridAlgorithm::BreadthFirstSearch
     Location currLoc, nextLoc;
     int nextDist;
 
-    // Execute BFS until no more valid locations can be reached
+    // Executes BFS until no more valid locations can be reached
     while (!locQueue.empty())
     {
         // Retrieve a location

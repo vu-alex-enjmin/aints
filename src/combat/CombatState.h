@@ -8,6 +8,8 @@
 
 #include "Ant.h"
 
+// Structure which stores the state of one turn's combat between 
+// a group of allies and a group of enemies
 struct CombatState
 {
     public:
