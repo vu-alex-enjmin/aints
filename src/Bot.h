@@ -68,7 +68,7 @@ class Bot
 
         // Orders maxAnts ants in searchRadius to move one step towards targetLocation
         // This general function is used by other functions
-        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts = 1);
+        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRange, int maxAnts = 1);
     
         // Orders ants to look for and go towards nearby food
         void SeekFood();

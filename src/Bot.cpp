@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "CombatState.h"
+#include "WrapGridAlgorithm.h"
 
 using namespace std;
 
@@ -22,6 +23,7 @@ void Bot::PlayGame()
     // Reads the game parameters and sets up
     cin >> State;
     State.Setup();
+    WrapGridAlgorithm::InitializeSize(State.Rows, State.Cols);
     EndTurn();
 
     srand(State.Seed);
@@ -119,7 +121,7 @@ void Bot::InitializeGuardHillTasks()
                     }
                     else
                     {
-                        if(visitedSquare.Ant->Team > 0)
+                        if (visitedSquare.Ant->Team > 0)
                             _hillInvaderAnts.push_back(Location(location));
                     }
                 }
@@ -132,19 +134,25 @@ void Bot::InitializeGuardHillTasks()
         }
         return false;
     };
-    State.MultiBreadthFirstSearchAll(vector(State.MyHills.begin(), State.MyHills.end()), defenseRange+10, onVisited, false);
+    
+    WrapGridAlgorithm::BreadthFirstSearchMultiple(
+        vector(State.MyHills.begin(), State.MyHills.end()),
+        defenseRange+10,
+        [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; },
+        onVisited
+    );
 
     for (auto& invaderLocation : _hillInvaderAnts)
     {
         Location closestHill;
         int closestDist = State.Rows+State.Cols;
 
-        for(auto& hill : State.MyHills)
+        for (auto& hill : State.MyHills)
         {
-            if(State.ManhattanDistance(invaderLocation, hill) < closestDist)
+            if(WrapGridAlgorithm::ManhattanDistance(invaderLocation, hill) < closestDist)
             {
                 closestHill = hill;
-                closestDist = State.ManhattanDistance(invaderLocation, hill);
+                closestDist = WrapGridAlgorithm::ManhattanDistance(invaderLocation, hill);
             }
         }
 
@@ -268,7 +276,7 @@ void Bot::InitializeAllyReinforcementTasks()
             bool candidateFound = false;
             for (const Ant* ant : availableAnts)
             {
-                if (!ant->HasTask() && (State.ManhattanDistance(ant->CurrentLocation, State.AllyAnts[reinforcementTasksPair.first]->CurrentLocation) > 5))
+                if (!ant->HasTask() && (WrapGridAlgorithm::ManhattanDistance(ant->CurrentLocation, State.AllyAnts[reinforcementTasksPair.first]->CurrentLocation) > 5))
                 {
                     reinforcementTask->AddCandidate(antsIt->second);
                     candidateFound = true;
@@ -416,6 +424,7 @@ void Bot::MakeMoves()
     int offset;
     int direction;
 
+    // TODO : move to its own function
     Ant *ant;
     // Picks out a default move for each ant
     for (const auto &antPair : State.AllyAnts)
@@ -428,7 +437,7 @@ void Bot::MakeMoves()
             for (int d = 0; d < TDIRECTIONS; d++)
             {
                 direction = ( d + offset ) % TDIRECTIONS;
-                Location destination = State.GetLocation(ant->CurrentLocation, direction);
+                Location destination = WrapGridAlgorithm::GetLocation(ant->CurrentLocation, direction);
 
                 if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
                     //(State.Grid[destination.Row][destination.Col].Ant == nullptr) &&
@@ -460,37 +469,46 @@ void Bot::SeekFood()
     unordered_map<Location, vector<int>, Location> antDirections; 
     for (const Location &foodLoc : State.Food)
     {
-         State.Bug << "For Food "<< foodLoc.Row<< "/"<<foodLoc.Col << endl;
+        State.Bug << "For Food "<< foodLoc.Row<< "/"<<foodLoc.Col << endl;
+        
+        bool antFound = false;
         int direction;
         Location antLocation;
 
-        antLocation = State.BreadthFirstSearch(
+        WrapGridAlgorithm::BreadthFirstSearchSingle(
             foodLoc,
-            &direction, 
             1.25 * State.ViewRadius,
-            [this](const Location& location)
+            [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; },
+            [&](const Location& location, int distance, int directionTowardFood)
             {
-                return State.IsAvailableAnt(location);
+                if (State.IsAvailableAnt(location))
+                {
+                    antLocation = location;
+                    direction = directionTowardFood;
+                    antFound = true;
+                    return true;
+                }
+                return false;
             }
         );
 
-        if (!(antLocation == Location(-1,-1)))
+        if (antFound)
         {
             antsToFoods[antLocation].push_back(foodLoc);
             antDirections[antLocation].push_back(direction);
         }
     }
 
-    for(auto& antFoodPair : antsToFoods)
+    for (auto& antFoodPair : antsToFoods)
     {
         int bestDist = State.Rows+State.Cols;
         int bestDirection = -1;
         int dist;
         State.Bug << "Food Ant at "<< antFoodPair.first.Row<< "/"<<antFoodPair.first.Col << endl;
-        for(int i = 0; i < antFoodPair.second.size(); i++)
+        for (int i = 0; i < antFoodPair.second.size(); i++)
         {
-            dist = State.ManhattanDistance(antFoodPair.first, antFoodPair.second[i]);
-            if(dist < bestDist)
+            dist = WrapGridAlgorithm::ManhattanDistance(antFoodPair.first, antFoodPair.second[i]);
+            if (dist < bestDist)
             {
                 State.Bug << "Food at "<< antFoodPair.second[i].Row<< "/"<<antFoodPair.second[i].Col << "is best" << endl;
                 bestDist = dist;
@@ -516,7 +534,7 @@ void Bot::DefendHills()
 {
     for (auto &task : _defendHillTasks)
     {
-        if(task.IsValid() && task.IsAssigned())
+        if (task.IsValid() && task.IsAssigned())
             task.GiveOrderToAssignee();
     }
 }
@@ -574,17 +592,27 @@ void Bot::ComputeArmies()
     // Search for enemy groups close to allies
     //   Initialization
     unordered_set<Location, Location> allyGroup;
-    auto onVisited = [&,this](const Location &location)
+
+    auto isNotWaterPredicate = [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; };
+    auto onVisited = [&](const Location& location, int distance, int direction)
     {
         if (State.IsAvailableAnt(location))
             allyGroup.insert(location);
+        return false;
     };
+
     //  Begin search
     for (const Location &antLoc : State.EnemyAnts)
     {
         allyGroup.clear();
-        State.CircularBreadthFirstSearchAll(antLoc, (State.AttackRadius + 1.75) * (State.AttackRadius + 1.75), onVisited, false);
-        
+
+        WrapGridAlgorithm::CircularBreadthFirstSearch(
+            antLoc, 
+            (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01),
+            isNotWaterPredicate, 
+            onVisited
+        );
+
         if (allyGroup.size() > 0)
         {
             unordered_set<Location, Location> allyGroupCopy = allyGroup;
@@ -646,34 +674,63 @@ void Bot::EndTurn()
     cout << "go" << endl;
 }
 
+// TODO : check for "Type* var" syntax and replace with "Type *var"
 // Orders ants to go to places that are in the Fog Of War
 void Bot::ExploreFog()
 {
-    int direction;
-    Location destination;
-    
-    Ant* ant;
-    // Picks out moves for each ant
+    // Initialize all exploration
+    int currentScore;
+    auto isNotWaterPredicate = [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; };
+    auto onVisited = [&](const Location& location, int distance, int direction)
+    {
+        currentScore += State.Grid[location.Row][location.Col].TurnsInFog;
+        return false;
+    };
+
+    // Search for available ants
     for (const auto &antPair : State.AllyAnts)
     {
-        ant = antPair.second;
-        // Check if ant already moved
-        if (!ant->Decided)
-        {
-            State.Bug << "Enter SearchMostFogged" << endl;
+        Ant *ant = antPair.second;
 
-            destination = State.SearchMostFogged(ant->CurrentLocation, &direction, ((int)State.ViewRadius)+5);
-            if (destination != Location(-1,-1))
+        // If ant has already chosen a direction, don't use it for exploration
+        if (ant->Decided)
+            continue;
+
+        // Initialize ant's exploration
+        int bestDirection = -1;
+        int bestScore = -1;
+        // Search for best exploration direction
+        for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
+        {
+            Location explorationLoc = WrapGridAlgorithm::GetLocation(ant->CurrentLocation, exploreDir);
+
+            // If exploration direction is on water or another ant, don't check it
+            if ((State.Grid[explorationLoc.Row][explorationLoc.Col].Ant != nullptr) || 
+                (State.Grid[explorationLoc.Row][explorationLoc.Col].IsWater))
             {
-                ant->SetMoveDirection(direction);
+                continue;
             }
 
-            State.Bug << "Exit SearchMostFogged" << endl;
+            // Initialize exploration in direction
+            currentScore = 0;
+            WrapGridAlgorithm::BreadthFirstSearchSingle(
+                explorationLoc,
+                ((int)State.ViewRadius)+5,
+                isNotWaterPredicate,
+                onVisited
+            );
+
+            // If a better direction was found,
+            if ((currentScore > 0) && (currentScore >= bestScore))
+            {
+                bestDirection = exploreDir;
+                bestScore = currentScore;
+            }
         }
-        else
+
+        if (bestDirection != -1)
         {
-            State.Bug << "Ant (" << ant->Id<< ") at " << ant->CurrentLocation.Row <<
-                "/" << ant->CurrentLocation.Col << "already decided" << endl;
+            ant->SetMoveDirection(bestDirection);
         }
     }
 }
@@ -689,17 +746,20 @@ void Bot::ApproachEnemies()
 
 // Orders maxAnts ants in searchRadius to move one step towards targetLocation
 // This general function is used by other functions
-void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts)
+void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRange, int maxAnts)
 {
     int movedAnts = 0;
-    State.MultiBreadthFirstSearchAll(
-        vector<Location>(1,targetLocation),
-        searchRadius,
-        [&](const Location& location, int distance, int directionToTake)
+
+    WrapGridAlgorithm::BreadthFirstSearchSingle
+    (
+        targetLocation,
+        searchRange,
+        [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; },
+        [&](const Location& location, int distance, int directionTowardTarget)
         {
             if (State.IsAvailableAnt(location))
             {
-                State.Grid[location.Row][location.Col].Ant->SetMoveDirection(directionToTake);
+                State.Grid[location.Row][location.Col].Ant->SetMoveDirection(directionTowardTarget);
                 movedAnts++;
                 return (movedAnts >= maxAnts);
             }
@@ -719,7 +779,7 @@ void Bot::MakeMove(Ant* ant)
         return;
     }
 
-    Location nLoc = State.GetLocation(ant->CurrentLocation, ant->MoveDirection);
+    Location nLoc = WrapGridAlgorithm::GetLocation(ant->CurrentLocation, ant->MoveDirection);
 
     Square &nextSquare = State.Grid[nLoc.Row][nLoc.Col];
     if (nextSquare.IsFood)

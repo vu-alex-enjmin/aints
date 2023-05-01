@@ -3,7 +3,7 @@
 #include <limits>
 #include <vector>
 
-#include "TaskAgent.h"
+#include "WrapGridAlgorithm.h"
 
 using namespace std;
 
@@ -18,15 +18,23 @@ void GuardHillTask::GiveOrderToAssignee()
 {
     Ant *assignee = (Ant*) _assignee;
 
-    std::vector<int> path = _state->AStar(assignee->CurrentLocation, _guardedLocation);
-    if(path.size() > 0)
+    std::vector<int> pathDirections;
+    if (WrapGridAlgorithm::AStar(
+        assignee->CurrentLocation, 
+        _guardedLocation, 
+        pathDirections, 
+        [&](const Location &loc) { return !_state->Grid[loc.Row][loc.Col].IsWater; }
+    ))
     {
-        int firstDirection = path[0];
-        assignee->SetMoveDirection(firstDirection);
-    }
-    else
-    {
-        assignee->SetMoveDirection();
+        if(pathDirections.size() > 0)
+        {
+            int firstDirection = pathDirections[0];
+            assignee->SetMoveDirection(firstDirection);
+        }
+        else
+        {
+            assignee->SetMoveDirection();
+        }
     }
 }
 
@@ -38,5 +46,5 @@ bool GuardHillTask::IsValid()
 int GuardHillTask::EvaluateCandidate(TaskAgent *candidate) 
 {
     Ant *antCandidate = (Ant*) candidate;
-    return _state->Rows + _state->Cols - _state->ManhattanDistance(antCandidate->CurrentLocation, _guardedLocation);
+    return _state->Rows + _state->Cols - WrapGridAlgorithm::ManhattanDistance(antCandidate->CurrentLocation, _guardedLocation);
 }

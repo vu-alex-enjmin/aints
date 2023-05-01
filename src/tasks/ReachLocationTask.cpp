@@ -1,5 +1,7 @@
 #include "ReachLocationTask.h"
 
+#include "WrapGridAlgorithm.h"
+
 ReachLocationTask::ReachLocationTask(State *state, Location targetLocation, int stopDistance)
     : AntTask(state)
     , _targetLocation(targetLocation)
@@ -12,16 +14,24 @@ void ReachLocationTask::GiveOrderToAssignee()
 {
     Ant *assignee = (Ant*) _assignee;
 
-    std::vector<int> path = _state->AStar(assignee->CurrentLocation, _targetLocation);
-    if (path.size() > _stopDistance)
+    std::vector<int> pathDirections;
+    if (WrapGridAlgorithm::AStar(
+        assignee->CurrentLocation, 
+        _targetLocation, 
+        pathDirections, 
+        [&](const Location &loc) { return !_state->Grid[loc.Row][loc.Col].IsWater; }
+    ))
     {
-        int firstDirection = path[0];
-        assignee->SetMoveDirection(firstDirection);
-    }
-    else
-    {
-        assignee->SetMoveDirection();
-        _completed = true;
+        if (pathDirections.size() > _stopDistance)
+        {
+            int firstDirection = pathDirections[0];
+            assignee->SetMoveDirection(firstDirection);
+        }
+        else
+        {
+            assignee->SetMoveDirection();
+            _completed = true;
+        }
     }
 }
 
@@ -33,5 +43,5 @@ bool ReachLocationTask::IsValid()
 int ReachLocationTask::EvaluateCandidate(TaskAgent *candidate) 
 {
     Ant *antCandidate = (Ant*) candidate;
-    return _state->Rows + _state->Cols - _state->ManhattanDistance(antCandidate->CurrentLocation, _targetLocation);
+    return _state->Rows + _state->Cols - WrapGridAlgorithm::ManhattanDistance(antCandidate->CurrentLocation, _targetLocation);
 }
