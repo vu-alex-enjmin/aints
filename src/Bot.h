@@ -89,7 +89,7 @@ class Bot
         void SeekFood();
         // Orders ants to go to places that are in the Fog Of War
         void ExploreFog();
-        // Orders ants go to hills to destroy them
+        // Orders ants to go to hills to destroy them
         void DestroyOtherHills();
         
         // Identifies occuring battles and groups the allies and enemies of each battle 
