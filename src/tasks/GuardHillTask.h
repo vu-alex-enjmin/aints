@@ -13,10 +13,12 @@ class GuardHillTask : public AntTask
             Methods
         =========================================
         */
-
+       
         GuardHillTask(State *state, Location guardedLocation);
 
+        // Leads the assignee (Ant) towards its _guardedLocation
         virtual void GiveOrderToAssignee() override;
+        // Returns true if there are still hills to guard
         virtual bool IsValid() override;
 
     protected:

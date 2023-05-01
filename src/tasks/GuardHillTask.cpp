@@ -14,6 +14,7 @@ GuardHillTask::GuardHillTask(State *state, Location guardedLocation)
 
 }
 
+// Leads the assignee (Ant) towards its _guardedLocation
 void GuardHillTask::GiveOrderToAssignee()
 {
     Ant *assignee = (Ant*) _assignee;
@@ -40,6 +41,7 @@ void GuardHillTask::GiveOrderToAssignee()
     }
 }
 
+// Returns true if there are still hills to guard
 bool GuardHillTask::IsValid()
 {
     return _state->MyHills.size() > 0;
@@ -48,5 +50,6 @@ bool GuardHillTask::IsValid()
 int GuardHillTask::EvaluateCandidate(TaskAgent *candidate) 
 {
     Ant *antCandidate = (Ant*) candidate;
+    // Evaluate candidate based on its distance from its guardedLocation
     return _state->Rows + _state->Cols - WrapGridAlgorithm::ManhattanDistance(antCandidate->CurrentLocation, _guardedLocation);
 }

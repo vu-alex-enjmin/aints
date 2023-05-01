@@ -10,6 +10,7 @@ ReachLocationTask::ReachLocationTask(State *state, Location targetLocation, int 
 
 }
 
+// Leads the assignee (Ant) towards its target Location
 void ReachLocationTask::GiveOrderToAssignee()
 {
     Ant *assignee = (Ant*) _assignee;
@@ -36,6 +37,7 @@ void ReachLocationTask::GiveOrderToAssignee()
     }
 }
 
+// returns true when the target is not a Water tile
 bool ReachLocationTask::IsValid()
 {
     return !_state->Grid[_targetLocation.Row][_targetLocation.Col].IsWater;
@@ -44,5 +46,6 @@ bool ReachLocationTask::IsValid()
 int ReachLocationTask::EvaluateCandidate(TaskAgent *candidate) 
 {
     Ant *antCandidate = (Ant*) candidate;
+    // Evaluate candidate based on its distance from its targetLocation
     return _state->Rows + _state->Cols - WrapGridAlgorithm::ManhattanDistance(antCandidate->CurrentLocation, _targetLocation);
 }

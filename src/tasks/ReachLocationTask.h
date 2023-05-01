@@ -29,7 +29,9 @@ class ReachLocationTask : public AntTask
         =========================================
         */
 
+        // Location to reach
         Location _targetLocation;
+        // Distance from the target (in steps to take) at which the location is considered reached
         int _stopDistance;
 
         /*
@@ -37,7 +39,7 @@ class ReachLocationTask : public AntTask
             Methods
         =========================================
         */
-       
+
         virtual int EvaluateCandidate(TaskAgent *candidate) override;
 };
 
