@@ -12,7 +12,7 @@ struct Square
 {
     bool IsWater, IsHill, IsFood;
     int HillPlayer, TurnsInFog;
-    Ant* Ant;
+    Ant *Ant;
 
     Square();
     // Resets the information for the square except water information

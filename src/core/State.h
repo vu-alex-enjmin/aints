@@ -65,7 +65,7 @@ struct State
     void Reset();
 
     // Check if pointer points to an ally ant that has not moved yet
-    bool IsAvailableAnt(const Ant* ant);
+    bool IsAvailableAnt(const Ant *ant);
     // Check if location in the Grid is an ally ant that has not moved yet
     bool IsAvailableAnt(const Location& location);
     // Check if id is a live ally ant that has not moved yet

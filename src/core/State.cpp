@@ -49,7 +49,7 @@ void State::Reset()
                 Grid[row][col].Reset();
     
     Bug << "Reset 4" << endl;
-    Ant* ant;
+    Ant *ant;
     for (const auto &antPair : AllyAnts)
     {
         ant = antPair.second;
@@ -121,7 +121,7 @@ void State::UpdateVisionInformation()
 
     for (const auto &antPair : AllyAnts)
     {
-        Ant* ant = antPair.second;
+        Ant *ant = antPair.second;
         Location antLocation = ant->CurrentLocation;
 
         WrapGridAlgorithm::CircularBreadthFirstSearch(
@@ -164,7 +164,7 @@ istream& operator>>(istream &is, State &state)
 {
     int row, col, player;
     string inputType, junk;
-    Ant* ant;
+    Ant *ant;
 
     // Finds out which turn it is
     while (is >> inputType)
@@ -326,7 +326,7 @@ istream& operator>>(istream &is, State &state)
 }
 
 // Checks if pointer points to an ally ant that has not moved yet
-bool State::IsAvailableAnt(const Ant* ant)
+bool State::IsAvailableAnt(const Ant *ant)
 {
     return (ant != nullptr) && (ant->Team == 0) && (!ant->Decided);
 }
@@ -334,7 +334,7 @@ bool State::IsAvailableAnt(const Ant* ant)
 // Checks if location in the Grid is an ally ant that has not moved yet
 bool State::IsAvailableAnt(const Location& location)
 {
-    Ant* ant = Grid[location.Row][location.Col].Ant;
+    Ant *ant = Grid[location.Row][location.Col].Ant;
     return IsAvailableAnt(ant);
 }
 
@@ -346,7 +346,7 @@ bool State::IsAvailableAnt(const int id)
     // when an ant is found, check if it is available
     if(antIterator != AllyAnts.end())
     {
-        Ant* ant = antIterator->second;
+        Ant *ant = antIterator->second;
         return IsAvailableAnt(ant);
     }
     // no ant found

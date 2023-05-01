@@ -140,12 +140,12 @@ void Bot::InitializeGuardHillTasks()
         onVisited
     );
 
-    for (auto& invaderLocation : _hillInvaderAnts)
+    for (auto &invaderLocation : _hillInvaderAnts)
     {
         Location closestHill;
         int closestDist = State.Rows+State.Cols;
 
-        for (auto& hill : State.MyHills)
+        for (auto &hill : State.MyHills)
         {
             if(WrapGridAlgorithm::ManhattanDistance(invaderLocation, hill) < closestDist)
             {
@@ -270,7 +270,7 @@ void Bot::InitializeAllyReinforcementTasks()
             
             // Assign first best available ant to task
             bool candidateFound = false;
-            for (const Ant* ant : availableAnts)
+            for (const Ant *ant : availableAnts)
             {
                 if (!ant->HasTask() && (WrapGridAlgorithm::ManhattanDistance(ant->CurrentLocation, State.AllyAnts[reinforcementTasksPair.first]->CurrentLocation) > 5))
                 {
@@ -350,7 +350,7 @@ void Bot::ClearFinishedTasks()
             if ((!reinforcementTasks[i]->IsValid()) || reinforcementTasks[i]->IsCompleted())
             {
                 // State.Bug << " ERASE REINFORCE TASK" << endl;
-                ReachAntTask* toErase = reinforcementTasks[i];
+                ReachAntTask *toErase = reinforcementTasks[i];
                 reinforcementTasks.erase(reinforcementTasks.begin() + i);
                 delete toErase;
             }
@@ -472,7 +472,7 @@ void Bot::SeekFood()
             foodLoc,
             1.25 * State.ViewRadius,
             [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; },
-            [&](const Location& location, int distance, int directionTowardFood)
+            [&](const Location &location, int distance, int directionTowardFood)
             {
                 if (State.IsAvailableAnt(location))
                 {
@@ -492,7 +492,7 @@ void Bot::SeekFood()
         }
     }
 
-    for (auto& antFoodPair : antsToFoods)
+    for (auto &antFoodPair : antsToFoods)
     {
         int bestDist = State.Rows+State.Cols;
         int bestDirection = -1;
@@ -583,7 +583,7 @@ void Bot::ComputeArmies()
     unordered_set<Location, Location> allyGroup;
 
     auto isNotWaterPredicate = [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; };
-    auto onVisited = [&](const Location& location, int distance, int direction)
+    auto onVisited = [&](const Location &location, int distance, int direction)
     {
         if (State.IsAvailableAnt(location))
             allyGroup.insert(location);
@@ -663,14 +663,13 @@ void Bot::EndTurn()
     cout << "go" << endl;
 }
 
-// TODO : check for "Type* var" syntax and replace with "Type *var"
 // Attempts to find a good exploration direction for each available ant
 void Bot::ExploreFog()
 {
     // Initialize all exploration
     int currentScore;
     auto isNotWaterPredicate = [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; };
-    auto onVisited = [&](const Location& location, int distance, int direction)
+    auto onVisited = [&](const Location &location, int distance, int direction)
     {
         currentScore += State.Grid[location.Row][location.Col].TurnsInFog;
         return false;
@@ -757,7 +756,7 @@ void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation, int se
 
 // outputs move information to the engine
 // and registers move info in ant
-void Bot::MakeMove(Ant* ant)
+void Bot::MakeMove(Ant *ant)
 {
     // State.Bug << "MAKE MOVE ant of ID " << ant->Id << endl;
     if (ant->MoveDirection == -1)
@@ -785,7 +784,7 @@ void Bot::MakeMove(Ant* ant)
             {
                 State.Bug << "Swap Ants " << nLoc.Row << ":" << nLoc.Col << " VS " << ant->CurrentLocation.Row << ":" << ant->CurrentLocation.Col << endl;
 
-                Ant* otherAnt = State.Grid[nLoc.Row][nLoc.Col].Ant;
+                Ant *otherAnt = State.Grid[nLoc.Row][nLoc.Col].Ant;
                 cout << "o " << ant->CurrentLocation.Row << " " << ant->CurrentLocation.Col << " " << CDIRECTIONS[ant->MoveDirection] << endl;
                 cout << "o " << otherAnt->CurrentLocation.Row << " " << otherAnt->CurrentLocation.Col << " " << CDIRECTIONS[otherAnt->MoveDirection] << endl;
                 
