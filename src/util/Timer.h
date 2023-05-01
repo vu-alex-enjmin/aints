@@ -3,23 +3,22 @@
 
 #include <sys/time.h>
 
-/*
-    struct for checking how long it has been since the Start of the Turn.
-*/
-#ifdef _WIN32 // Windows timer (DON'T USE THIS TIMER UNLESS YOU'RE ON WINDOWS!)
+// Struct for checking how long it has been since the Start of the Turn.
+#ifdef _WIN32 // Windows timer
     #include <io.h>
     #include <windows.h>
 
     struct Timer
     {
-        
         /*
         =========================================
             Attributes
         =========================================
         */
-       
-        clock_t StartTime, CurrentTime;
+        // Time at which the timer was started
+        clock_t StartTime;
+        // Current timer time
+        clock_t CurrentTime;
 
         /*
         =========================================
@@ -27,10 +26,11 @@
         =========================================
         */
 
+        // Creates the timer
         Timer();
-
+        // Starts the timer
         void Start();
-
+        // Returns how long it has been since the timer was last started in milliseconds
         double GetTime();
     };
 
@@ -45,9 +45,10 @@
         */
 
         timeval TimeVal;
-        double StartTime, CurrentTime;
-
-        Timer();
+        // Time at which the timer was started
+        double StartTime;
+        // Current timer time
+        double CurrentTime;
         
         /*
         =========================================
@@ -55,10 +56,11 @@
         =========================================
         */
 
-        // starts the timer
+        // Creates the timer
+        Timer();
+        // Starts the timer
         void Start();
-
-        // returns how long it has been since the timer was last started in milliseconds
+        // Returns how long it has been since the timer was last started in milliseconds
         double GetTime();
     };
 #endif
