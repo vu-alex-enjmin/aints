@@ -9,8 +9,6 @@
 
 using namespace std;
 
-// TODO : reorder all methods
-
 // Constructor
 Bot::Bot()
     : State()
@@ -37,6 +35,415 @@ void Bot::PlayGame()
         State.UpdateHillInformation();
         MakeMoves();
         EndTurn();
+    }
+}
+
+// Makes the bots moves for the Turn
+void Bot::MakeMoves()
+{
+
+    State.Bug << "Turn " << State.Turn << ":" << endl;
+    // State.Bug << State << endl;
+
+    State.Bug << "Compute Armies" << endl;
+    ComputeArmies();
+    
+    State.Bug << "ClearFinishedTasks" << endl;
+    ClearFinishedTasks();
+
+    State.Bug << "InitializeTasks" << endl;
+    InitializeTasks();
+
+    State.Bug << "DefendHills" << endl;
+    DefendHills();
+
+    State.Bug << "SeekFood" << endl;
+    SeekFood();
+
+    State.Bug << "Combat" << endl;
+    Combat();
+
+    State.Bug << "DestroyOtherHills" << endl; 
+    DestroyOtherHills();
+
+    State.Bug << "Do Tasks" << endl;
+    DoTasks();
+
+    State.Bug << "ApproachEnemies" << endl;
+    ApproachEnemies();
+
+    State.Bug << "ExploreFog" << endl;
+    ExploreFog();
+
+    State.Bug << "MakeDefaultMove" << endl;
+    MakeDefaultMove();
+
+    State.Bug << "ExecuteMoves" << endl;
+    ExecuteMoves();
+
+    State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
+}
+
+// Finishes the Turn
+void Bot::EndTurn()
+{
+    // Reset state data
+    if (State.Turn > 0)
+    {
+        State.Reset();
+        _antsBlockedByOtherAnts.clear();
+    }
+    // Increment turn count
+    State.Turn++;
+    
+    // Tell the engine that the bot has finished its turn
+    cout << "go" << endl;
+}
+
+// Orders maxAnts ants in searchRadius to move one step towards targetLocation
+// This general function is used by other functions
+void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation_r, int searchRange, int maxAnts)
+{
+    int movedAnts = 0;
+
+    // Do a BFS starting from the target in order to find
+    // candidates within 'searchRange' for moving toward target
+    WrapGridAlgorithm::BreadthFirstSearchSingle
+    (
+        targetLocation_r,
+        searchRange,
+        [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; },
+        [&](const Location& location, int distance, int directionTowardTarget)
+        {
+            if (State.IsAvailableAnt(location))
+            {
+                State.Grid[location.Row][location.Col].Ant_p->SetMoveDirection(directionTowardTarget);
+                movedAnts++;
+                return (movedAnts >= maxAnts);
+            }
+            return false;
+        }
+    );
+}
+
+// Orders ants to look for and go towards nearby food
+void Bot::SeekFood()
+{
+    // finding food is done the other way around : foods find their nearest (ally) ant
+    
+    // both these maps are used to store an ant and information about foods where 'ant' is the food's nearest ant
+    // map of <ant, vector of distances>
+    // the vector part contains distances from 'ant' to foods that are nearest
+    unordered_map<Location, vector<int>, Location> antsDistanceToFoods;
+    // map of <ant, vector of directions>
+    // the vector part contains all first directions to take from 'ant' to the nearest foods
+    unordered_map<Location, vector<int>, Location> antDirections; 
+    
+    for (const Location &foodLoc_r : State.Food)
+    {
+        bool antFound = false;
+        int direction;
+        Location antLocation;
+        int antDistance;
+
+        // Look for single nearest ally ant starting from foodLoc
+        WrapGridAlgorithm::BreadthFirstSearchSingle(
+            foodLoc_r,
+            1.25 * State.ViewRadius,
+            [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; },
+            [&](const Location &location_r, int distance, int directionTowardFood)
+            {
+                if (State.IsAvailableAnt(location_r))
+                {
+                    antLocation = location_r;
+                    direction = directionTowardFood;
+                    antFound = true;
+                    antDistance = distance;
+                    return true;
+                }
+                return false;
+            }
+        );
+        
+        // register ant info if found
+        if (antFound)
+        {
+            antsDistanceToFoods[antLocation].push_back(antDistance);
+            antDirections[antLocation].push_back(direction);
+        }
+    }
+
+    // make ants go towards the food that's nearest to them
+    for (auto &antDistancePair_r : antsDistanceToFoods)
+    {
+        int bestDist = State.Rows+State.Cols; // Put a very high value by default
+        int bestDirection = -1; // default direction is neutral
+        int dist;
+        
+        // iterate and find best distance and direction towards foods for current ant
+        for (int i = 0; i < antDistancePair_r.second.size(); i++)
+        {
+            dist = antDistancePair_r.second[i];
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestDirection = antDirections[antDistancePair_r.first][i];
+            }
+        }
+        // perform move
+        State.Grid[antDistancePair_r.first.Row][antDistancePair_r.first.Col].Ant_p->SetMoveDirection(bestDirection);
+    }
+}
+
+// Orders ants to go to places that are in the Fog Of War
+void Bot::ExploreFog()
+{
+    // Initialize all exploration
+    int currentScore;
+    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
+    auto onVisited = [&](const Location &location_r, int distance, int direction)
+    {
+        currentScore += State.Grid[location_r.Row][location_r.Col].TurnsInFog;
+        return false;
+    };
+
+    // Search for available ants
+    for (const auto &antPair_r : State.AllyAnts)
+    {
+        Ant *ant_p = antPair_r.second;
+
+        // If ant has already chosen a direction, don't use it for exploration
+        if (ant_p->Decided)
+            continue;
+
+        // Initialize ant's exploration
+        int bestDirection = -1;
+        int bestScore = -1;
+        // Search for best exploration direction
+        for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
+        {
+            Location explorationLoc = WrapGridAlgorithm::GetLocation(ant_p->CurrentLocation, exploreDir);
+
+            // If exploration direction is on water or another ant, don't check it
+            if ((State.Grid[explorationLoc.Row][explorationLoc.Col].Ant_p != nullptr) || 
+                (State.Grid[explorationLoc.Row][explorationLoc.Col].IsWater))
+            {
+                continue;
+            }
+
+            // Initialize exploration in direction
+            currentScore = 0;
+            WrapGridAlgorithm::BreadthFirstSearchSingle(
+                explorationLoc,
+                ((int)State.ViewRadius)+5,
+                isNotWaterPredicate,
+                onVisited
+            );
+
+            // If a better direction was found, register it
+            if ((currentScore > 0) && (currentScore >= bestScore))
+            {
+                bestDirection = exploreDir;
+                bestScore = currentScore;
+            }
+        }
+
+        if (bestDirection != -1)
+        {
+            ant_p->SetMoveDirection(bestDirection);
+        }
+    }
+}
+
+// Orders ants to go to hills to destroy them
+void Bot::DestroyOtherHills()
+{
+    for (const Location &hillLoc_r : State.EnemyHills)
+    {
+        MoveClosestAvailableAntsTowards(hillLoc_r, (int)(2 * State.ViewRadius));
+    }
+}
+
+// Identifies occuring battles and groups the allies and enemies of each battle 
+void Bot::ComputeArmies()
+{
+    // (Re)initialize ally/enemy groups
+    allyGroups.clear();
+    enemyGroups.clear();
+
+    if (State.EnemyAnts.empty())
+        return;
+
+    // Search for enemy groups close to allies
+    //   Initialization
+    unordered_set<Location, Location> allyGroup;
+
+    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
+    auto onVisited = [&](const Location &location_r, int distance, int direction)
+    {
+        if (State.IsAvailableAnt(location_r))
+            allyGroup.insert(location_r);
+        return false;
+    };
+
+    //  Begin search
+    for (const Location &antLoc_r : State.EnemyAnts)
+    {
+        // Create an ally group around an enemy
+        allyGroup.clear();
+        WrapGridAlgorithm::CircularBreadthFirstSearch(
+            antLoc_r, 
+            (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01),
+            isNotWaterPredicate, 
+            onVisited
+        );
+
+        // If any allies are inside the group, add the group to the vector
+        // of ally groups, and add the corresponding single enemy to an enemy group
+        if (allyGroup.size() > 0)
+        {
+            unordered_set<Location, Location> allyGroupCopy = allyGroup;
+            allyGroups.push_back(allyGroupCopy);
+
+            unordered_set<Location, Location> enemyGroup;
+            enemyGroup.insert(antLoc_r);
+            enemyGroups.push_back(enemyGroup);
+        }
+    }
+
+    // Merge groups that are close to each-other to create "armies".
+    // Groups are considered close to each-other if they contain the same ally.
+    for (int i = 0; i < allyGroups.size(); i++)
+    {
+        bool merge = false;
+        for (int j = 0; j < allyGroups.size(); j++)
+        {
+            if (i == j)
+                continue;
+            
+            // Check whether a merge should be made
+            // (whether an ally is inside different groups)
+            merge = false;
+            for (const Location &allyLoc_r : allyGroups[i])
+            {
+                if (allyGroups[j].count(allyLoc_r) > 0)
+                {
+                    merge = true;
+                    break;
+                }
+            }
+
+            // Merge groups if needed
+            if (merge)
+            {
+                // Merge ally groups
+                allyGroups[i].insert(allyGroups[j].begin(), allyGroups[j].end());
+                allyGroups.erase(allyGroups.begin() + j);
+                // Merge their corresponding enemy groups
+                enemyGroups[i].insert(enemyGroups[j].begin(), enemyGroups[j].end());
+                enemyGroups.erase(enemyGroups.begin() + j);
+                
+                // Update loop indices according to merge position
+                if (j < i)
+                    i--;
+                
+                j--;
+            }
+        }
+    }
+}
+
+// Makes groups of allies formed by ComputeArmies() move in order to resolve battles
+void Bot::Combat()
+{
+    // Compute combat move for all armies
+    for (int i = 0; i < allyGroups.size(); i++)
+    {
+        // State.Bug << "Combat " << i << endl;
+        // State.Bug << "   " << "A=" << allyGroups[i].size() << endl;
+        // for (const Location &ally_r : allyGroups[i])
+        // {
+        //     State.Bug << "      " << ally_r.Row << "/" << ally_r.Col << endl;
+        // }
+        // State.Bug << "   " << "E=" << enemyGroups[i].size() << endl;
+        // for (const Location &enemy_r : enemyGroups[i])
+        // {
+        //     State.Bug << "      " << enemy_r.Row << "/" << enemy_r.Col << endl;
+        // }
+
+        // Initialize starting combat state for one ally army VS one enemy army
+        CombatState combatState;
+        for (const auto &allyLoc_r : allyGroups[i]) 
+        {
+            combatState.UnmovedAllies.push(State.Grid[allyLoc_r.Row][allyLoc_r.Col].Ant_p);
+        }
+        
+        for (const auto &enemyLoc_r : enemyGroups[i]) 
+        {
+            combatState.UnmovedEnemies.push(State.Grid[enemyLoc_r.Row][enemyLoc_r.Col].Ant_p);
+        }
+        // Attempt to compute the best move for each ally ant 
+        CombatEvaluator.ComputeBestMove(&combatState);
+        
+        // Set move for all ants inside ally army
+        while (!CombatEvaluator.BestMoves.empty())
+        {
+            pair<Ant*, int> &bestMove_r = CombatEvaluator.BestMoves.top();
+            if (!State.AllyAnts[bestMove_r.first->Id]->Decided)
+                State.AllyAnts[bestMove_r.first->Id]->SetMoveDirection(bestMove_r.second);
+            CombatEvaluator.BestMoves.pop();
+        }
+    }
+}
+
+// Orders ants to follow nearby enemies
+void Bot::ApproachEnemies()
+{
+    for (const Location &enemy_r : State.EnemyAnts)
+    {
+        MoveClosestAvailableAntsTowards(enemy_r, State.AttackRadius+4, 3);
+    }
+}
+
+// Orders ants to make their default move if they aren't doing anything else
+void Bot::MakeDefaultMove()
+{
+    int offset;
+    int direction;
+    Ant *ant_p;
+    // Picks out a default move for each ant (random available direction)
+    for (const auto &antPair_r : State.AllyAnts)
+    {
+        ant_p = antPair_r.second;
+        // Check if ant already has decided on a move
+        if (!ant_p->Decided)
+        {
+            offset = rand();
+            for (int d = 0; d < TDIRECTIONS; d++)
+            {
+                direction = ( d + offset ) % TDIRECTIONS;
+                Location destination = WrapGridAlgorithm::GetLocation(ant_p->CurrentLocation, direction);
+
+                if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
+                    (State.Grid[destination.Row][destination.Col].HillPlayer != 0)) // Prevent move on own hill
+                {
+                    ant_p->SetMoveDirection(direction);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Move every ant that has chosen a move
+void Bot::ExecuteMoves()
+{
+    Ant *ant_p;
+    // Execute move for every ant
+    for (const auto &antPair_r : State.AllyAnts)
+    {
+        ant_p = antPair_r.second;
+        MakeMove(ant_p);
     }
 }
 
@@ -229,6 +636,16 @@ void Bot::DoTasks()
     }
 }
 
+// Sends ants to protect an ally hill from approaching enemies
+void Bot::DefendHills()
+{
+    for (auto &task_r : _defendHillTasks)
+    {
+        if (task_r.IsValid() && task_r.IsAssigned())
+            task_r.GiveOrderToAssignee();
+    }
+}
+
 // Remove all tasks that are either completed or irrelevant
 void Bot::ClearFinishedTasks()
 {
@@ -258,425 +675,6 @@ void Bot::ClearFinishedTasks()
 
     State.Bug << "Size After " << _guardHillTasks.size() <<endl;
     */
-}
-
-// Makes the bots moves for the Turn
-void Bot::MakeMoves()
-{
-
-    State.Bug << "Turn " << State.Turn << ":" << endl;
-    // State.Bug << State << endl;
-
-    State.Bug << "Compute Armies" << endl;
-    ComputeArmies();
-    
-    State.Bug << "ClearFinishedTasks" << endl;
-    ClearFinishedTasks();
-
-    State.Bug << "InitializeTasks" << endl;
-    InitializeTasks();
-
-    State.Bug << "DefendHills" << endl;
-    DefendHills();
-
-    State.Bug << "SeekFood" << endl;
-    SeekFood();
-
-    State.Bug << "Combat" << endl;
-    Combat();
-
-    State.Bug << "DestroyOtherHills" << endl; 
-    DestroyOtherHills();
-
-    State.Bug << "Do Tasks" << endl;
-    DoTasks();
-
-    State.Bug << "ApproachEnemies" << endl;
-    ApproachEnemies();
-
-    State.Bug << "ExploreFog" << endl;
-    ExploreFog();
-
-    State.Bug << "MakeDefaultMove" << endl;
-    MakeDefaultMove();
-
-    State.Bug << "ExecuteMoves" << endl;
-    ExecuteMoves();
-
-    State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
-}
-
-// Orders ants to make their default move if they aren't doing anything else
-void Bot::MakeDefaultMove()
-{
-    int offset;
-    int direction;
-    Ant *ant_p;
-    // Picks out a default move for each ant (random available direction)
-    for (const auto &antPair_r : State.AllyAnts)
-    {
-        ant_p = antPair_r.second;
-        // Check if ant already has decided on a move
-        if (!ant_p->Decided)
-        {
-            offset = rand();
-            for (int d = 0; d < TDIRECTIONS; d++)
-            {
-                direction = ( d + offset ) % TDIRECTIONS;
-                Location destination = WrapGridAlgorithm::GetLocation(ant_p->CurrentLocation, direction);
-
-                if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
-                    (State.Grid[destination.Row][destination.Col].HillPlayer != 0)) // Prevent move on own hill
-                {
-                    ant_p->SetMoveDirection(direction);
-                    break;
-                }
-            }
-        }
-    }
-}
-
-// Move every ant that has chosen a move
-void Bot::ExecuteMoves()
-{
-    Ant *ant_p;
-    // Execute move for every ant
-    for (const auto &antPair_r : State.AllyAnts)
-    {
-        ant_p = antPair_r.second;
-        MakeMove(ant_p);
-    }
-}
-
-// Orders ants to look for and go towards nearby food
-void Bot::SeekFood()
-{
-    // finding food is done the other way around : foods find their nearest (ally) ant
-    
-    // both these maps are used to store an ant and information about foods where 'ant' is the food's nearest ant
-    // map of <ant, vector of distances>
-    // the vector part contains distances from 'ant' to foods that are nearest
-    unordered_map<Location, vector<int>, Location> antsDistanceToFoods;
-    // map of <ant, vector of directions>
-    // the vector part contains all first directions to take from 'ant' to the nearest foods
-    unordered_map<Location, vector<int>, Location> antDirections; 
-    
-    for (const Location &foodLoc_r : State.Food)
-    {
-        bool antFound = false;
-        int direction;
-        Location antLocation;
-        int antDistance;
-
-        // Look for single nearest ally ant starting from foodLoc
-        WrapGridAlgorithm::BreadthFirstSearchSingle(
-            foodLoc_r,
-            1.25 * State.ViewRadius,
-            [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; },
-            [&](const Location &location_r, int distance, int directionTowardFood)
-            {
-                if (State.IsAvailableAnt(location_r))
-                {
-                    antLocation = location_r;
-                    direction = directionTowardFood;
-                    antFound = true;
-                    antDistance = distance;
-                    return true;
-                }
-                return false;
-            }
-        );
-        
-        // register ant info if found
-        if (antFound)
-        {
-            antsDistanceToFoods[antLocation].push_back(antDistance);
-            antDirections[antLocation].push_back(direction);
-        }
-    }
-
-    // make ants go towards the food that's nearest to them
-    for (auto &antDistancePair_r : antsDistanceToFoods)
-    {
-        int bestDist = State.Rows+State.Cols; // Put a very high value by default
-        int bestDirection = -1; // default direction is neutral
-        int dist;
-        
-        // iterate and find best distance and direction towards foods for current ant
-        for (int i = 0; i < antDistancePair_r.second.size(); i++)
-        {
-            dist = antDistancePair_r.second[i];
-            if (dist < bestDist)
-            {
-                bestDist = dist;
-                bestDirection = antDirections[antDistancePair_r.first][i];
-            }
-        }
-        // perform move
-        State.Grid[antDistancePair_r.first.Row][antDistancePair_r.first.Col].Ant_p->SetMoveDirection(bestDirection);
-    }
-}
-
-// Orders ants to go to hills to destroy them
-void Bot::DestroyOtherHills()
-{
-    for (const Location &hillLoc_r : State.EnemyHills)
-    {
-        MoveClosestAvailableAntsTowards(hillLoc_r, (int)(2 * State.ViewRadius));
-    }
-}
-
-// Sends ants to protect an ally hill from approaching enemies
-void Bot::DefendHills()
-{
-    for (auto &task_r : _defendHillTasks)
-    {
-        if (task_r.IsValid() && task_r.IsAssigned())
-            task_r.GiveOrderToAssignee();
-    }
-}
-
-// Makes groups of allies formed by ComputeArmies() move in order to resolve battles
-void Bot::Combat()
-{
-    // Compute combat move for all armies
-    for (int i = 0; i < allyGroups.size(); i++)
-    {
-        // State.Bug << "Combat " << i << endl;
-        // State.Bug << "   " << "A=" << allyGroups[i].size() << endl;
-        // for (const Location &ally_r : allyGroups[i])
-        // {
-        //     State.Bug << "      " << ally_r.Row << "/" << ally_r.Col << endl;
-        // }
-        // State.Bug << "   " << "E=" << enemyGroups[i].size() << endl;
-        // for (const Location &enemy_r : enemyGroups[i])
-        // {
-        //     State.Bug << "      " << enemy_r.Row << "/" << enemy_r.Col << endl;
-        // }
-
-        // Initialize starting combat state for one ally army VS one enemy army
-        CombatState combatState;
-        for (const auto &allyLoc_r : allyGroups[i]) 
-        {
-            combatState.UnmovedAllies.push(State.Grid[allyLoc_r.Row][allyLoc_r.Col].Ant_p);
-        }
-        
-        for (const auto &enemyLoc_r : enemyGroups[i]) 
-        {
-            combatState.UnmovedEnemies.push(State.Grid[enemyLoc_r.Row][enemyLoc_r.Col].Ant_p);
-        }
-        // Attempt to compute the best move for each ally ant 
-        CombatEvaluator.ComputeBestMove(&combatState);
-        
-        // Set move for all ants inside ally army
-        while (!CombatEvaluator.BestMoves.empty())
-        {
-            pair<Ant*, int> &bestMove_r = CombatEvaluator.BestMoves.top();
-            if (!State.AllyAnts[bestMove_r.first->Id]->Decided)
-                State.AllyAnts[bestMove_r.first->Id]->SetMoveDirection(bestMove_r.second);
-            CombatEvaluator.BestMoves.pop();
-        }
-    }
-}
-
-// Identifies occuring battles and groups the allies and enemies of each battle 
-void Bot::ComputeArmies()
-{
-    // (Re)initialize ally/enemy groups
-    allyGroups.clear();
-    enemyGroups.clear();
-
-    if (State.EnemyAnts.empty())
-        return;
-
-    // Search for enemy groups close to allies
-    //   Initialization
-    unordered_set<Location, Location> allyGroup;
-
-    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
-    auto onVisited = [&](const Location &location_r, int distance, int direction)
-    {
-        if (State.IsAvailableAnt(location_r))
-            allyGroup.insert(location_r);
-        return false;
-    };
-
-    //  Begin search
-    for (const Location &antLoc_r : State.EnemyAnts)
-    {
-        // Create an ally group around an enemy
-        allyGroup.clear();
-        WrapGridAlgorithm::CircularBreadthFirstSearch(
-            antLoc_r, 
-            (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01),
-            isNotWaterPredicate, 
-            onVisited
-        );
-
-        // If any allies are inside the group, add the group to the vector
-        // of ally groups, and add the corresponding single enemy to an enemy group
-        if (allyGroup.size() > 0)
-        {
-            unordered_set<Location, Location> allyGroupCopy = allyGroup;
-            allyGroups.push_back(allyGroupCopy);
-
-            unordered_set<Location, Location> enemyGroup;
-            enemyGroup.insert(antLoc_r);
-            enemyGroups.push_back(enemyGroup);
-        }
-    }
-
-    // Merge groups that are close to each-other to create "armies".
-    // Groups are considered close to each-other if they contain the same ally.
-    for (int i = 0; i < allyGroups.size(); i++)
-    {
-        bool merge = false;
-        for (int j = 0; j < allyGroups.size(); j++)
-        {
-            if (i == j)
-                continue;
-            
-            // Check whether a merge should be made
-            // (whether an ally is inside different groups)
-            merge = false;
-            for (const Location &allyLoc_r : allyGroups[i])
-            {
-                if (allyGroups[j].count(allyLoc_r) > 0)
-                {
-                    merge = true;
-                    break;
-                }
-            }
-
-            // Merge groups if needed
-            if (merge)
-            {
-                // Merge ally groups
-                allyGroups[i].insert(allyGroups[j].begin(), allyGroups[j].end());
-                allyGroups.erase(allyGroups.begin() + j);
-                // Merge their corresponding enemy groups
-                enemyGroups[i].insert(enemyGroups[j].begin(), enemyGroups[j].end());
-                enemyGroups.erase(enemyGroups.begin() + j);
-                
-                // Update loop indices according to merge position
-                if (j < i)
-                    i--;
-                
-                j--;
-            }
-        }
-    }
-}
-
-// Finishes the Turn
-void Bot::EndTurn()
-{
-    // Reset state data
-    if (State.Turn > 0)
-    {
-        State.Reset();
-        _antsBlockedByOtherAnts.clear();
-    }
-    // Increment turn count
-    State.Turn++;
-    
-    // Tell the engine that the bot has finished its turn
-    cout << "go" << endl;
-}
-
-// Orders ants to go to places that are in the Fog Of War
-void Bot::ExploreFog()
-{
-    // Initialize all exploration
-    int currentScore;
-    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
-    auto onVisited = [&](const Location &location_r, int distance, int direction)
-    {
-        currentScore += State.Grid[location_r.Row][location_r.Col].TurnsInFog;
-        return false;
-    };
-
-    // Search for available ants
-    for (const auto &antPair_r : State.AllyAnts)
-    {
-        Ant *ant_p = antPair_r.second;
-
-        // If ant has already chosen a direction, don't use it for exploration
-        if (ant_p->Decided)
-            continue;
-
-        // Initialize ant's exploration
-        int bestDirection = -1;
-        int bestScore = -1;
-        // Search for best exploration direction
-        for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
-        {
-            Location explorationLoc = WrapGridAlgorithm::GetLocation(ant_p->CurrentLocation, exploreDir);
-
-            // If exploration direction is on water or another ant, don't check it
-            if ((State.Grid[explorationLoc.Row][explorationLoc.Col].Ant_p != nullptr) || 
-                (State.Grid[explorationLoc.Row][explorationLoc.Col].IsWater))
-            {
-                continue;
-            }
-
-            // Initialize exploration in direction
-            currentScore = 0;
-            WrapGridAlgorithm::BreadthFirstSearchSingle(
-                explorationLoc,
-                ((int)State.ViewRadius)+5,
-                isNotWaterPredicate,
-                onVisited
-            );
-
-            // If a better direction was found, register it
-            if ((currentScore > 0) && (currentScore >= bestScore))
-            {
-                bestDirection = exploreDir;
-                bestScore = currentScore;
-            }
-        }
-
-        if (bestDirection != -1)
-        {
-            ant_p->SetMoveDirection(bestDirection);
-        }
-    }
-}
-
-// Orders ants to follow nearby enemies
-void Bot::ApproachEnemies()
-{
-    for (const Location &enemy_r : State.EnemyAnts)
-    {
-        MoveClosestAvailableAntsTowards(enemy_r, State.AttackRadius+4, 3);
-    }
-}
-
-// Orders maxAnts ants in searchRadius to move one step towards targetLocation
-// This general function is used by other functions
-void Bot::MoveClosestAvailableAntsTowards(const Location &targetLocation_r, int searchRange, int maxAnts)
-{
-    int movedAnts = 0;
-
-    // Do a BFS starting from the target in order to find
-    // candidates within 'searchRange' for moving toward target
-    WrapGridAlgorithm::BreadthFirstSearchSingle
-    (
-        targetLocation_r,
-        searchRange,
-        [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; },
-        [&](const Location& location, int distance, int directionTowardTarget)
-        {
-            if (State.IsAvailableAnt(location))
-            {
-                State.Grid[location.Row][location.Col].Ant_p->SetMoveDirection(directionTowardTarget);
-                movedAnts++;
-                return (movedAnts >= maxAnts);
-            }
-            return false;
-        }
-    );
 }
 
 // Outputs move information to the engine
