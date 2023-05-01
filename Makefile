@@ -9,13 +9,13 @@ EXE_DIR=build/
 
 SOURCES=$(wildcard $(SRC_DIR)**/*.cpp) $(wildcard $(SRC_DIR)*.cpp)
 OBJECTS=$(patsubst ${SRC_DIR}%.cpp,${OBJ_DIR}%.o,$(SOURCES))
-EXECUTABLE=$(EXE_DIR)MyBot
+EXECUTABLE=$(EXE_DIR)VuBot
 
 INCLUDE_PATHS=$(addprefix -I${SRC_DIR}, $(SRC_SUB_DIRS))
 CFLAGS:=$(INCLUDE_PATHS) $(CFLAGS)
 
 #Uncomment the following to enable debugging
-CFLAGS+=-g -DDEBUG
+#CFLAGS+=-g -DDEBUG
 
 all: $(OBJECTS) $(EXECUTABLE)
 
