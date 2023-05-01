@@ -4,6 +4,8 @@
 #include <queue>
 #include <algorithm>
 
+#include "WrapGridAlgorithm.h"
+
 using namespace std;
 
 // Constructor
@@ -98,96 +100,9 @@ void State::UpdateHillInformation()
     }
 }
 
-// Returns the euclidean distance between two locations with the edges wrapped
-double State::Distance(const Location &loc1, const Location &loc2)
-{
-    return sqrt(Distance2(loc1, loc2));
-}
-
-// Returns the euclidean square distance between two locations with the edges wrapped
-int State::Distance2(const Location &loc1, const Location &loc2)
-{
-    int d1 = abs(loc1.Row-loc2.Row),
-        d2 = abs(loc1.Col-loc2.Col),
-        dr = min(d1, Rows-d1),
-        dc = min(d2, Cols-d2);
-    return dr*dr + dc*dc;
-}
-
-// Returns the new location from moving in a given direction with the edges wrapped
-Location State::GetLocation(const Location &loc, int direction)
-{
-    return Location( (loc.Row + DIRECTIONS[direction][0] + Rows) % Rows,
-                     (loc.Col + DIRECTIONS[direction][1] + Cols) % Cols );
-}
-
-vector<int> State::AStar(const Location &startLoc, const Location &targetLoc)
-{
-    // Initialization of collections
-    //  actual distance to target
-    vector<vector<int>> distances(Rows, vector<int>(Cols, numeric_limits<int>::max()));
-    //  score (distance to target + heuristic)
-    vector<vector<int>> scores(Rows, vector<int>(Cols, numeric_limits<int>::max()));
-    //  directions taken to reach a given location (used to reconstruct the path)
-    vector<vector<int>> directions(Rows, vector<int>(Cols, -1));
-    auto comparator = [&](const Location a, const Location b)
-    {
-        return scores[a.Row][a.Col] > scores[b.Row][b.Col];
-    };
-    priority_queue<Location, vector<Location>, decltype(comparator)> locQueue(comparator);
-
-    // Prime the algorithm
-    locQueue.push(startLoc);
-    scores[startLoc.Row][startLoc.Col] = 0;
-    distances[startLoc.Row][startLoc.Col] = 0;
-
-    // Search for path
-    Location currLoc, nextLoc;
-    int currLocDist, nextLocDist;
-    while (!locQueue.empty())
-    {
-        currLoc = locQueue.top();
-        // Compute path that was taken to reach target and return it
-        if (currLoc == targetLoc)
-        {
-            vector<int> pathDirections(distances[currLoc.Row][currLoc.Col]);
-
-            while (currLoc != startLoc)
-            {
-                pathDirections.push_back(directions[currLoc.Row][currLoc.Col]);
-                currLoc = GetLocation(currLoc, (directions[currLoc.Row][currLoc.Col] + TDIRECTIONS / 2) % TDIRECTIONS);
-            }
-            reverse(pathDirections.begin(), pathDirections.end());
-
-            return pathDirections;
-        }
-        
-        // Add/Update unvisited neighbours
-        locQueue.pop();
-        currLocDist = distances[currLoc.Row][currLoc.Col];
-        for (int d = 0; d < TDIRECTIONS; d++)
-        {
-            nextLoc = GetLocation(currLoc, d);
-            // If next location is water, skip it
-            if (Grid[nextLoc.Row][nextLoc.Col].IsWater)
-                continue;
-
-            nextLocDist = currLocDist + 1;
-            if (nextLocDist < distances[nextLoc.Row][nextLoc.Col])
-            {
-                directions[nextLoc.Row][nextLoc.Col] = d;
-                distances[nextLoc.Row][nextLoc.Col] = nextLocDist;
-                scores[nextLoc.Row][nextLoc.Col] = nextLocDist + ManhattanDistance(nextLoc, targetLoc);
-                locQueue.push(nextLoc);
-            }
-        }
-    }
-
-    // If no path is found, a path containing (-1) is returned
-    return vector<int>(1, -1);
-}
-
 /*
+    // TODO : update this function header comment
+
     This function will update update the lastSeen value for any squares currently
     visible by one of your live ants.
 
@@ -198,162 +113,27 @@ vector<int> State::AStar(const Location &startLoc, const Location &targetLoc)
 */
 void State::UpdateVisionInformation()
 {
-    std::queue<Location> locQueue;
-    Location startLoc, currentLoc, nextLoc;
+    auto onVisited = [&](const Location& location, int distance, int direction)
+    {
+        Grid[location.Row][location.Col].TurnsInFog = 0;
+        return false;
+    };
 
-    Ant* ant;
     for (const auto &antPair : AllyAnts)
     {
-        ant = antPair.second;
-        startLoc = ant->CurrentLocation;
+        Ant* ant = antPair.second;
+        Location antLocation = ant->CurrentLocation;
 
-        locQueue.push(startLoc);
-
-        std::vector<std::vector<bool> > visited(Rows, std::vector<bool>(Cols, 0));
-        Grid[startLoc.Row][startLoc.Col].TurnsInFog = 0;
-        visited[startLoc.Row][startLoc.Col] = 1;
-
-        while (!locQueue.empty())
-        {
-            currentLoc = locQueue.front();
-            locQueue.pop();
-
-            for (int d = 0; d < TDIRECTIONS; d++)
-            {
-                nextLoc = GetLocation(currentLoc, d);
-
-                if(!visited[nextLoc.Row][nextLoc.Col] && Distance(startLoc, nextLoc) <= ViewRadius)
-                {
-                    Grid[nextLoc.Row][nextLoc.Col].TurnsInFog = 0;
-                    locQueue.push(nextLoc);
-                }
-                visited[nextLoc.Row][nextLoc.Col] = 1;
-            }
-        }
+        WrapGridAlgorithm::CircularBreadthFirstSearch(
+            antLocation,
+            ViewRadius2,
+            [&](const Location &loc) { return true; },
+            onVisited
+        );
     }
 }
 
-Location State::BreadthFirstSearch(const Location &startLoc, int* outDirection, int range, function<bool(const Location&)> const &stopPredicate, bool ignoreWater)
-{
-    if (stopPredicate(startLoc))
-    {
-        return startLoc;
-    }
-
-    std::queue<Location> locQueue;
-    Location currLoc, nextLoc;
-    int nextDist;
-
-    locQueue.push(startLoc);
-
-    std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
-    distances[startLoc.Row][startLoc.Col] = 0;
-
-    while (!locQueue.empty())
-    {
-        currLoc = locQueue.front();
-        locQueue.pop();
-        nextDist = distances[currLoc.Row][currLoc.Col] + 1;
-
-        for (int d = 0; d < TDIRECTIONS; d++)
-        {
-            nextLoc = GetLocation(currLoc, d);
-
-            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
-                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
-                (nextDist <= range))
-            {
-                if (stopPredicate(nextLoc))
-                {
-                    if (outDirection != nullptr)
-                    {
-                        *outDirection = (d + TDIRECTIONS / 2) % TDIRECTIONS;
-                    }
-                    return nextLoc;
-                }
-                locQueue.push(nextLoc);
-            }
-            distances[nextLoc.Row][nextLoc.Col] = nextDist;
-        }
-    }
-
-    return Location(-1, -1);
-}
-
-void State::CircularBreadthFirstSearchAll(const Location &startLoc, int range2, function<void(const Location&)> const &onVisited, bool ignoreWater)
-{
-    std::queue<Location> locQueue;
-    locQueue.push(startLoc);
-
-    std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
-    distances[startLoc.Row][startLoc.Col] = 0;
-
-    Location currLoc, nextLoc;
-    int nextDist;
-    while (!locQueue.empty())
-    {
-        currLoc = locQueue.front();
-        locQueue.pop();
-        nextDist = distances[currLoc.Row][currLoc.Col] + 1;
-
-        for (int d = 0; d < TDIRECTIONS; d++)
-        {
-            nextLoc = GetLocation(currLoc, d);
-
-            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
-                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
-                (Distance2(nextLoc, startLoc) <= (range2)))
-            {
-                onVisited(nextLoc);
-                locQueue.push(nextLoc);
-            }
-            distances[nextLoc.Row][nextLoc.Col] = nextDist;
-        }
-    }
-}
-
-void State::MultiBreadthFirstSearchAll(const std::vector<Location> &startLocs, int range, function<bool(const Location&, const int, const int)> const &onVisited, bool ignoreWater)
-{
-    std::queue<Location> locQueue;
-
-    std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
-     for(auto startLoc : startLocs)
-     {
-        if (onVisited(startLoc, 0, -1))
-        {
-            return;
-        }
-        locQueue.push(startLoc);
-        distances[startLoc.Row][startLoc.Col] = 0;
-     }
-
-    Location currLoc, nextLoc;
-    int nextDist;
-    while (!locQueue.empty())
-    {
-        currLoc = locQueue.front();
-        locQueue.pop();
-        nextDist = distances[currLoc.Row][currLoc.Col] + 1;
-
-        for (int d = 0; d < TDIRECTIONS; d++)
-        {
-            nextLoc = GetLocation(currLoc, d);
-
-            if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
-                (ignoreWater || !Grid[nextLoc.Row][nextLoc.Col].IsWater) &&
-                (nextDist <= range))
-            {
-                if (onVisited(nextLoc, nextDist, (d + TDIRECTIONS / 2) % TDIRECTIONS))
-                {
-                    return;
-                }
-                locQueue.push(nextLoc);
-            }
-            distances[nextLoc.Row][nextLoc.Col] = nextDist;
-        }
-    }
-}
-
+// TODO : move to Bot class and use proper functions instead
 Location State::SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange)
 {
     Location currLoc, nextLoc, explLoc;
@@ -366,7 +146,7 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
     for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
     {
         currentScore = 0;
-        explLoc = GetLocation(startLoc, exploreDir);
+        explLoc = WrapGridAlgorithm::GetLocation(startLoc, exploreDir);
         if ((Grid[explLoc.Row][explLoc.Col].Ant == nullptr) && 
             (!Grid[explLoc.Row][explLoc.Col].IsWater))
         {
@@ -386,7 +166,7 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
                     nextDist = distances[currLoc.Row][currLoc.Col] + 1;
                     for (int d = 0; d < TDIRECTIONS; d++)
                     {
-                        nextLoc = GetLocation(currLoc, d);
+                        nextLoc = WrapGridAlgorithm::GetLocation(currLoc, d);
 
                         if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
                             (!Grid[nextLoc.Row][nextLoc.Col].IsWater))
@@ -412,19 +192,8 @@ Location State::SearchMostFogged(const Location &startLoc, int* outDirection, in
     else
     {
         *outDirection = bestDirection;
-        return GetLocation(startLoc, bestDirection);
+        return WrapGridAlgorithm::GetLocation(startLoc, bestDirection);
     }
-}
-
-double State::ManhattanDistance(const Location &loc1, const Location &loc2)
-{
-    int rowDist = abs(loc1.Row-loc2.Row);
-    int colDist = abs(loc1.Col-loc2.Col);
-    // Evaluating distance both ways (since the map loops)
-    int bestRowDist = min(rowDist, Rows-rowDist);
-    int bestColDist = min(colDist, Cols-colDist);
-    
-    return bestRowDist + bestColDist;
 }
 
 /*

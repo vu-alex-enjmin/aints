@@ -1,9 +1,11 @@
 #include "CombatEvaluator.h"
 
-#include "State.h"
-
 #include <limits>
 #include <unordered_map>
+
+#include "State.h"
+#include "WrapGridAlgorithm.h"
+
 #define MAX_ITERATIONS 50000
 
 using namespace std;
@@ -48,15 +50,6 @@ void CombatEvaluator::ComputeNextAllyMove()
     if (CurrentCombatState->UnmovedAllies.size() > 0)
     {
         //GameState->Bug << "UnmovedAllies > 0" << endl;
-        /*
-        if antIndex < myAnts.size
-            myAnt = myAnts[antIndex]
-            for each possible move of myAnt
-                simulate move
-                max(antIndex+1)
-                undo move
-
-        */
         Ant *toMove = CurrentCombatState->UnmovedAllies.top();
         //GameState->Bug << "Ant Exists? "<< (toMove != nullptr) << endl;
         CurrentCombatState->UnmovedAllies.pop();
@@ -74,7 +67,7 @@ void CombatEvaluator::ComputeNextAllyMove()
             nextLocation = 
                 (move == -1) ? 
                 (toMove->CurrentLocation) :
-                GameState->GetLocation(toMove->CurrentLocation, move);
+                WrapGridAlgorithm::GetLocation(toMove->CurrentLocation, move);
             
             //GameState->Bug << "Ally Check Location" << endl;
             // Check next location validity (not Water & no moved Ally)
@@ -151,26 +144,6 @@ int CombatEvaluator::ComputeNextEnemyMove()
     {
         return -5;
     }
-/*
-
-if antIndex < enemyAnts.size
-    minValue = +Infinity
-    enemyAnt = enemyAnts[antIndex]
-    for each possible move of enemyAnt
-        simulate move
-        value = min(antIndex+1)
-        undo move
-
-        if value < bestValue
-            return -Infinity  // cut!
-
-        if value < minValue
-            minValue = value
-
-    return minValue
-else
-    return evaluate()
-*/
 
     //GameState->Bug << " Compute Enemy " << endl;
 
@@ -194,7 +167,7 @@ else
             nextLocation = 
                 (move == -1) ? 
                 (toMove->CurrentLocation) :
-                GameState->GetLocation(toMove->CurrentLocation, move);
+                WrapGridAlgorithm::GetLocation(toMove->CurrentLocation, move);
             
             // Check next location validity (not Water & no moved Ally)
             if ((GameState->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
@@ -265,7 +238,7 @@ int CombatEvaluator::EvaluateCurrentCombatState()
     {
         for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations) 
         {
-            if (GameState->Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
                 continue;
             
             AlliesOpponentCount[allyLoc]++;
@@ -279,7 +252,7 @@ int CombatEvaluator::EvaluateCurrentCombatState()
     {
         for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations) 
         {
-            if (GameState->Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
                 continue;
             
             if (AlliesOpponentCount[allyLoc] >= EnemiesOpponentCount[enemyLoc])
@@ -296,7 +269,7 @@ int CombatEvaluator::EvaluateCurrentCombatState()
     {
         for (const auto &allyLoc : CurrentCombatState->MovedAllyLocations)
         {
-            if (GameState->Distance2(enemyLoc, allyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(enemyLoc, allyLoc) > GameState->AttackRadius2)
                 continue;
             
             if (EnemiesOpponentCount[enemyLoc] >= AlliesOpponentCount[allyLoc])

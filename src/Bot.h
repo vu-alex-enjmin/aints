@@ -38,7 +38,7 @@ class Bot
         // Ants which are currently blocked by other ants (key is blocking ant's ID, value is blocked ant)
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
         std::vector<Location> _hillInvaderAnts; // Ants that are in the guardHill walls
-        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRadius, int maxAnts = 1);
+        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRange, int maxAnts = 1);
         void SeekFood();
         void ExploreFog();
         void DestroyOtherHills();
