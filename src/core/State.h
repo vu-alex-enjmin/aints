@@ -76,7 +76,6 @@ struct State
     // Directions are int values: (0 for 'N', 1 for 'E', 2 for 'S', 3 for 'W')
     std::vector<int> AStar(const Location &startLoc, const Location &targetLoc);
     Location SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange);
-    Location GetMiddlePoint(const Location& loc1, const Location& loc2);
     void UpdateVisionInformation();
     void UpdateHillInformation();
 };

@@ -146,9 +146,7 @@ void Bot::InitializeGuardHillTasks()
             }
         }
 
-        Location midPoint = State.GetMiddlePoint(closestHill, invaderLocation);
-        if (!State.Grid[midPoint.Row][midPoint.Col].IsWater)
-            _defendHillTasks.push_back(ReachLocationTask(&State, invaderLocation));
+        _defendHillTasks.push_back(ReachLocationTask(&State, invaderLocation));
     }
 
     
