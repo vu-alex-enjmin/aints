@@ -420,13 +420,22 @@ void Bot::MakeMoves()
     State.Bug << "ExploreFog" << endl;
     ExploreFog();
 
-    State.Bug << "FinalMove" << endl;
+    State.Bug << "MakeDefaultMove" << endl;
+    MakeDefaultMove();
+
+    State.Bug << "ExecuteMoves" << endl;
+    ExecuteMoves();
+
+    State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
+}
+
+// Orders ants to make their default move if they aren't doing anything else
+void Bot::MakeDefaultMove()
+{
     int offset;
     int direction;
-
-    // TODO : move to its own function
     Ant *ant;
-    // Picks out a default move for each ant
+    // Picks out a default move for each ant (random available direction)
     for (const auto &antPair : State.AllyAnts)
     {
         ant = antPair.second;
@@ -440,7 +449,6 @@ void Bot::MakeMoves()
                 Location destination = WrapGridAlgorithm::GetLocation(ant->CurrentLocation, direction);
 
                 if ((!State.Grid[destination.Row][destination.Col].IsWater) &&
-                    //(State.Grid[destination.Row][destination.Col].Ant == nullptr) &&
                     (State.Grid[destination.Row][destination.Col].HillPlayer != 0))
                 {
                     ant->SetMoveDirection(direction);
@@ -449,17 +457,18 @@ void Bot::MakeMoves()
             }
         }
     }
+}
 
-    State.Bug << "FinalMove End" << endl;
-
-    // Make every ant move
+// Move every ant that has chosen a move
+void Bot::ExecuteMoves()
+{
+    Ant *ant;
+    // Execute move for every ant
     for (const auto &antPair : State.AllyAnts)
     {
         ant = antPair.second;
         MakeMove(ant);
     }
-
-    State.Bug << "time taken: " << State.Timer.GetTime() << "ms" << endl << endl;
 }
 
 // Orders ants to look for and go towards nearby food

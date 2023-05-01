@@ -100,6 +100,11 @@ class Bot
         // Orders ants to follow nearby enemies
         void ApproachEnemies();
 
+        // Orders ants to make a default move if they aren't doing anything else
+        void MakeDefaultMove();
+
+        // Move every ant that has chosen a move
+        void ExecuteMoves();
 
         // >> Task Management functions
 
