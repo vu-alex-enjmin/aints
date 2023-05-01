@@ -3,55 +3,46 @@
 
 #include <fstream>
 
-#ifndef DEBUG
-    // #define DEBUG
-#endif
-
-/*
-    struct for debugging - this is gross but can be used pretty much like an ofstream,
-                           except the debug messages are stripped while compiling if
-                           DEBUG is not defined.
-    example:
-        Bug bug;
-        bug.open("./debug.txt");
-        bug << state << endl;
-        bug << "testing" << 2.0 << '%' << endl;
-        bug.close();
-*/
+// Struct used for debug logs.
+// To be used like an output stream. 
 struct Bug
 {
-    
-    /*
-    =========================================
-        Attributes
-    =========================================
-    */
+    public:
+        /*
+        =========================================
+            Attributes
+        =========================================
+        */
+        // File in which to write debug logs
+        // (cout does not work because it is used for sending moves)
+        std::ofstream File;
 
-    std::ofstream File;
+        
+        /*
+        =========================================
+            Methods
+        =========================================
+        */
 
-    
-    /*
-    =========================================
-        Methods
-    =========================================
-    */
+        // Create the object used for debug logging
+        Bug();
 
-    Bug();
+        // Opens the specified file for debug logs
+        void Open(const std::string &filename);
 
-    // opens the specified file
-    void Open(const std::string &filename);
-
-    // closes the ofstream
-    void Close();
+        // Closes the ofstream
+        void Close();
 };
 
-// output function for endl
+// Output function for endl
 Bug& operator<<(Bug &bug, std::ostream& (*manipulator)(std::ostream&));
 
-// output function
+// Output function
 template <class T>
 Bug& operator<<(Bug &bug, const T &t)
 {
+    // Write into file if DEBUG keyword is defined
+    // else, don't do anything and return the Bug instance
     #ifdef DEBUG
         bug.File << t;
     #endif
