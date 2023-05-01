@@ -26,7 +26,7 @@ class AntTask : public Task
         =========================================
         */
 
-        // Game's State instance
+        // Pointer to the Game's State instance
         State *_state;
 
         
@@ -35,6 +35,7 @@ class AntTask : public Task
             Methods
         =========================================
         */
+
         virtual int EvaluateCandidate(TaskAgent *candidate) override = 0;
 };
 
