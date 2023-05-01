@@ -663,34 +663,63 @@ void Bot::EndTurn()
     cout << "go" << endl;
 }
 
-
+// TODO : check for "Type* var" syntax and replace with "Type *var"
+// Attempts to find a good exploration direction for each available ant
 void Bot::ExploreFog()
 {
-    int direction;
-    Location destination;
-    
-    Ant* ant;
-    // Picks out moves for each ant
+    // Initialize all exploration
+    int currentScore;
+    auto isNotWaterPredicate = [&](const Location &loc) { return !State.Grid[loc.Row][loc.Col].IsWater; };
+    auto onVisited = [&](const Location& location, int distance, int direction)
+    {
+        currentScore += State.Grid[location.Row][location.Col].TurnsInFog;
+        return false;
+    };
+
+    // Search for available ants
     for (const auto &antPair : State.AllyAnts)
     {
-        ant = antPair.second;
-        // Check if ant already moved
-        if (!ant->Decided)
-        {
-            State.Bug << "Enter SearchMostFogged" << endl;
+        Ant *ant = antPair.second;
 
-            destination = State.SearchMostFogged(ant->CurrentLocation, &direction, ((int)State.ViewRadius)+5);
-            if (destination != Location(-1,-1))
+        // If ant has already chosen a direction, don't use it for exploration
+        if (ant->Decided)
+            continue;
+
+        // Initialize ant's exploration
+        int bestDirection = -1;
+        int bestScore = -1;
+        // Search for best exploration direction
+        for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
+        {
+            Location explorationLoc = WrapGridAlgorithm::GetLocation(ant->CurrentLocation, exploreDir);
+
+            // If exploration direction is on water or another ant, don't check it
+            if ((State.Grid[explorationLoc.Row][explorationLoc.Col].Ant != nullptr) || 
+                (State.Grid[explorationLoc.Row][explorationLoc.Col].IsWater))
             {
-                ant->SetMoveDirection(direction);
+                continue;
             }
 
-            State.Bug << "Exit SearchMostFogged" << endl;
+            // Initialize exploration in direction
+            currentScore = 0;
+            WrapGridAlgorithm::BreadthFirstSearchSingle(
+                explorationLoc,
+                ((int)State.ViewRadius)+5,
+                isNotWaterPredicate,
+                onVisited
+            );
+
+            // If a better direction was found,
+            if ((currentScore > 0) && (currentScore >= bestScore))
+            {
+                bestDirection = exploreDir;
+                bestScore = currentScore;
+            }
         }
-        else
+
+        if (bestDirection != -1)
         {
-            State.Bug << "Ant (" << ant->Id<< ") at " << ant->CurrentLocation.Row <<
-                "/" << ant->CurrentLocation.Col << "already decided" << endl;
+            ant->SetMoveDirection(bestDirection);
         }
     }
 }

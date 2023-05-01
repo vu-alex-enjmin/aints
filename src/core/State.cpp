@@ -133,75 +133,7 @@ void State::UpdateVisionInformation()
     }
 }
 
-// TODO : move to Bot class and use proper functions instead
-Location State::SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange)
-{
-    Location currLoc, nextLoc, explLoc;
-    int currentScore;
-
-    int bestDirection;
-    int bestScore = 0;
-
-    int nextDist;
-    for (int exploreDir = 0; exploreDir < TDIRECTIONS; exploreDir++)
-    {
-        currentScore = 0;
-        explLoc = WrapGridAlgorithm::GetLocation(startLoc, exploreDir);
-        if ((Grid[explLoc.Row][explLoc.Col].Ant == nullptr) && 
-            (!Grid[explLoc.Row][explLoc.Col].IsWater))
-        {
-            std::queue<Location> locQueue;
-            locQueue.push(explLoc);
-            
-            std::vector<std::vector<int>> distances(Rows, std::vector<int>(Cols, -1));
-            distances[explLoc.Row][explLoc.Col] = 0;
-
-            while (!locQueue.empty())
-            {
-                currLoc = locQueue.front();
-                locQueue.pop();
-                currentScore += Grid[currLoc.Row][currLoc.Col].TurnsInFog;
-                if (distances[currLoc.Row][currLoc.Col] < stopRange)
-                {
-                    nextDist = distances[currLoc.Row][currLoc.Col] + 1;
-                    for (int d = 0; d < TDIRECTIONS; d++)
-                    {
-                        nextLoc = WrapGridAlgorithm::GetLocation(currLoc, d);
-
-                        if ((distances[nextLoc.Row][nextLoc.Col] == -1) &&
-                            (!Grid[nextLoc.Row][nextLoc.Col].IsWater))
-                        {
-                            locQueue.push(nextLoc);
-                            distances[nextLoc.Row][nextLoc.Col] = nextDist;
-                        }
-                    }
-                }
-            }
-            if (currentScore >= bestScore)
-            {
-                bestDirection = exploreDir;
-                bestScore = currentScore;
-            }
-        }
-    }
-    
-    if (bestScore == 0)
-    {
-        return Location(-1, -1);
-    }
-    else
-    {
-        *outDirection = bestDirection;
-        return WrapGridAlgorithm::GetLocation(startLoc, bestDirection);
-    }
-}
-
-/*
-    This is the output function for a state. It will add a char map
-    representation of the state to the output stream passed to it.
-
-    For example, you might call "cout << state << endl;"
-*/
+// Output function for state, used for representing state inside output stream
 ostream& operator<<(ostream &os, const State &state)
 {
     for (int row = 0; row < state.Rows; row++)

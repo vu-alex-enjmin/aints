@@ -64,9 +64,6 @@ struct State
     void Setup();
     void Reset();
 
-    // TODO : rewrite and move to Bot
-    Location SearchMostFogged(const Location &startLoc, int* outDirection, int stopRange);
-
     // Check if pointer points to an ally ant that has not moved yet
     bool IsAvailableAnt(const Ant* ant);
     // Check if location in the Grid is an ally ant that has not moved yet
