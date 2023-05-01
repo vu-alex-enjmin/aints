@@ -66,8 +66,6 @@ class Bot
         std::vector<GuardHillTask> _guardHillTasks;
         // tasks for attacking invaders inside barriers around hills
         std::vector<ReachLocationTask> _defendHillTasks;
-        // tasks for joining an ant in combat
-        std::unordered_map<int, std::vector<ReachAntTask*>> _allyReinforcementTasks;
         // Ants which are currently blocked by other ants
         // <blocking ant's ID, blocked ant>
         std::unordered_map<int, Ant*> _antsBlockedByOtherAnts;
@@ -112,10 +110,6 @@ class Bot
         void InitializeTasks();
         // Creates and assign tasks related to guarding and defending the hill
         void InitializeHillProtectionTasks();
-        // Creates and assign All
-        // TODO commenter si on l'utilise ou pas
-        void InitializeAllyReinforcementTasks();
-        
         // Makes Ants perform tasks
         void DoTasks();
         // Sends ants to protect an ally hill from approaching enemies

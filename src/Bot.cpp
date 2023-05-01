@@ -51,7 +51,6 @@ void Bot::InitializeTasks()
     */
 
     InitializeHillProtectionTasks();
-    // InitializeAllyReinforcementTasks();
 
     /*
     for (auto &antPair : State.AllyAnts)
@@ -214,98 +213,6 @@ void Bot::InitializeHillProtectionTasks()
     }
 }
 
-// Creates and assign All
-// TODO commenter si on l'utilise ou pas
-void Bot::InitializeAllyReinforcementTasks()
-{
-    // Create tasks if needed
-    // State.Bug << "CREATE REINFORCEMENTS" << endl;
-    if (State.AllyAnts.size() > 18 * State.MyHills.size())
-    {
-        const int antsPerReinforcement = 1;
-        for (int i = 0; i < allyGroups.size(); i++)
-        {
-            if (allyGroups[i].size() > enemyGroups[i].size())
-                continue;
-
-            // Create "antsPerReinforcement" tasks per ant in a "dangerous" encouter
-            // State.Bug << "   Create Reinforcement for Group " << i << endl;
-            for (const Location &allyLoc : allyGroups[i])
-            {
-                int allyId = State.Grid[allyLoc.Row][allyLoc.Col].Ant->Id;
-                if (_allyReinforcementTasks.count(allyId) <= 0)
-                {
-                    // State.Bug << "     Create Reinforcement for Ant at : " << allyLoc.Col << ":" << allyLoc.Row << endl;
-                    vector<ReachAntTask*> reinforcementTasks;
-                    for (int j = 0; j < antsPerReinforcement; j++)
-                    {
-                        // State.Bug << "         Create single Reinforcement" << endl;
-                        reinforcementTasks.push_back(new ReachAntTask(&State, allyId, 2));
-                    }
-                    // State.Bug << "     Add reinforcements" << endl;
-                    _allyReinforcementTasks[allyId] = reinforcementTasks;
-                }
-            }
-        }
-    }
-    
-
-    // Assign tasks
-    if (_allyReinforcementTasks.size() <= 0)
-        return;
-
-    // State.Bug << "ASSIGN REINFORCEMENTS" << endl;
-    vector<Ant*> availableAnts;
-    for (const auto &antPair : State.AllyAnts)
-    {
-        if (!antPair.second->HasTask())
-            availableAnts.push_back(antPair.second);
-    }
-
-    auto antsIt = State.AllyAnts.begin();
-    auto antsItEnd = State.AllyAnts.end();
-
-    for (auto &reinforcementTasksPair : _allyReinforcementTasks)
-    {
-        for (auto &reinforcementTask : reinforcementTasksPair.second)
-        {
-            if (reinforcementTask->IsAssigned())
-                continue;
-            
-            // Assign first best available ant to task
-            bool candidateFound = false;
-            for (const Ant *ant : availableAnts)
-            {
-                if (!ant->HasTask() && (WrapGridAlgorithm::ManhattanDistance(ant->CurrentLocation, State.AllyAnts[reinforcementTasksPair.first]->CurrentLocation) > 5))
-                {
-                    reinforcementTask->AddCandidate(antsIt->second);
-                    candidateFound = true;
-                }
-            }
-
-            if (candidateFound)
-            {
-                reinforcementTask->SelectCandidate();
-                reinforcementTask->ClearCandidates();
-            }
-
-            /*
-            while ((antsIt != antsItEnd) && (!reinforcementTask->IsAssigned()))
-            {
-                if ((antsIt->first != reinforcementTasksPair.first) && (!antsIt->second->HasTask()))
-                {
-                    reinforcementTask->AddCandidate(antsIt->second);
-                    reinforcementTask->SelectCandidate();
-                    reinforcementTask->ClearCandidates();
-                    // State.Bug << "   Assign Reinforcement with Ant at : " << antsIt->second->CurrentLocation.Col << ":" << antsIt->second->CurrentLocation.Row << endl;
-                }
-                ++antsIt;
-            }
-            */
-        }
-    }
-}
-
 // Makes Ants perform tasks
 void Bot::DoTasks()
 {
@@ -339,38 +246,6 @@ void Bot::ClearFinishedTasks()
         // {
         //     State.Bug << "Valid and/or Not Completed " << endl;
         // }
-    }
-
-    // Clear finished ally reinforcement tasks
-    unordered_set<int> fullyFinishedReinforcementTasks;
-    for (auto &reinforcementTasksPair : _allyReinforcementTasks)
-    {
-        vector<ReachAntTask*> &reinforcementTasks = reinforcementTasksPair.second;
-
-        for (int i = reinforcementTasks.size() - 1; i >= 0; i--)
-        {
-            // State.Bug << " REINFORCE TASK STATE i=" << i << " " << 
-            //     reinforcementTasks[i]->IsValid() << " " << 
-            //     reinforcementTasks[i]->IsCompleted() << " " <<
-            //     reinforcementTasks[i]->IsAssigned() << endl;
-            if ((!reinforcementTasks[i]->IsValid()) || reinforcementTasks[i]->IsCompleted())
-            {
-                // State.Bug << " ERASE REINFORCE TASK" << endl;
-                ReachAntTask *toErase = reinforcementTasks[i];
-                reinforcementTasks.erase(reinforcementTasks.begin() + i);
-                delete toErase;
-            }
-        }
-
-        if (reinforcementTasks.size() == 0)
-        {
-            fullyFinishedReinforcementTasks.insert(reinforcementTasksPair.first);
-        }
-    }
-
-    for (int fullyFinishedTask : fullyFinishedReinforcementTasks)
-    {
-        _allyReinforcementTasks.erase(fullyFinishedTask);
     }
 
     /*
