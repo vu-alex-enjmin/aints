@@ -22,7 +22,7 @@ class Task
         // Sets the Task as performed and finished successfully
         void SetAsCompleted();
         // Adds candidate to vector of candidates after calculating its fitness
-        void AddCandidate(TaskAgent *candidate);
+        void AddCandidate(TaskAgent *candidate_p);
         // Finds fittest candidate among current candidates and puts it as assignee
         // (Note that the fittest candidate has the highest fitness value)
         void SelectCandidate();
@@ -56,7 +56,7 @@ class Task
         bool _completed;
         // Chosen candidate for the Task
         // nullptr by default
-        TaskAgent *_assignee;
+        TaskAgent *_assignee_p;
         // Potential candidates to be assigned for the Task
         // <candidate, fitness>
         std::vector<std::pair<TaskAgent*, int>> _candidateFitnessPairs;
@@ -69,7 +69,7 @@ class Task
 
         // Evaluates a candidate's fitness for the Task
         // the higher the value, the better
-        virtual int EvaluateCandidate(TaskAgent *candidate) = 0;
+        virtual int EvaluateCandidate(TaskAgent *candidate_p) = 0;
 
     private:
         /*

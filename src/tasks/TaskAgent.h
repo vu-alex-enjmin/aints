@@ -14,7 +14,7 @@ class TaskAgent
         */
        
         // Currently assigned Task
-        Task *CurrentTask;
+        Task *CurrentTask_p;
 
         /*
         =========================================

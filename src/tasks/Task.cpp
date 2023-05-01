@@ -10,7 +10,7 @@ unsigned int Task::_nextId = 0;
 Task::Task()
     : _id(_nextId++)
     , _completed(false)
-    , _assignee(nullptr)
+    , _assignee_p(nullptr)
     , _candidateFitnessPairs()
 {
     // Allocate memory for at least 4 candidates
@@ -24,9 +24,9 @@ void Task::SetAsCompleted()
 }
 
 // Adds candidate to vector of candidates after calculating its fitness
-void Task::AddCandidate(TaskAgent *candidate)
+void Task::AddCandidate(TaskAgent *candidate_p)
 {
-    auto test = pair(candidate, EvaluateCandidate(candidate));
+    auto test = pair(candidate_p, EvaluateCandidate(candidate_p));
     _candidateFitnessPairs.push_back(test);
 }
 
@@ -35,29 +35,29 @@ void Task::AddCandidate(TaskAgent *candidate)
 void Task::SelectCandidate()
 {
     // Initialize selection
-    TaskAgent *bestCandidate = nullptr;
+    TaskAgent *bestCandidate_p = nullptr;
     int bestCandidateFitness = numeric_limits<int>::min();
 
     // Search for candidate with best fitness
-    for (const auto &candidateFitnessPair : _candidateFitnessPairs)
+    for (const auto &candidateFitnessPair_r : _candidateFitnessPairs)
     {
         // Skip candidates which already have a task assigned
-        if (candidateFitnessPair.first->HasTask())
+        if (candidateFitnessPair_r.first->HasTask())
             continue;
 
-        if (candidateFitnessPair.second > bestCandidateFitness)
+        if (candidateFitnessPair_r.second > bestCandidateFitness)
         {
-            bestCandidate = candidateFitnessPair.first;
-            bestCandidateFitness = candidateFitnessPair.second;
+            bestCandidate_p = candidateFitnessPair_r.first;
+            bestCandidateFitness = candidateFitnessPair_r.second;
         }
     }
     
-    if (bestCandidate == nullptr)
+    if (bestCandidate_p == nullptr)
         return;
 
     // If a best candidate was found, assign task to best candidate
-    bestCandidate->CurrentTask = this;
-    _assignee = bestCandidate;
+    bestCandidate_p->CurrentTask_p = this;
+    _assignee_p = bestCandidate_p;
 }
 
 // Removes all candidates from vector of candidates
@@ -69,17 +69,17 @@ void Task::ClearCandidates()
 // Removes task from assignee and remove assignee 
 void Task::Unassign()
 {
-    if (_assignee == nullptr)
+    if (_assignee_p == nullptr)
         return;
     
-    _assignee->CurrentTask = nullptr;
-    _assignee = nullptr;
+    _assignee_p->CurrentTask_p = nullptr;
+    _assignee_p = nullptr;
 }
 
 // Checks if the Task has an assignee
 bool Task::IsAssigned() const
 {
-    return _assignee != nullptr;
+    return _assignee_p != nullptr;
 }
 
 // Checks if Task was previously SetAsCompleted

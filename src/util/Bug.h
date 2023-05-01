@@ -28,26 +28,26 @@ struct Bug
         Bug();
 
         // Opens the specified file for debug logs
-        void Open(const std::string &filename);
+        void Open(const std::string &filename_r);
 
         // Closes the ofstream
         void Close();
 };
 
 // Output function for endl
-Bug& operator<<(Bug &bug, std::ostream& (*manipulator)(std::ostream&));
+Bug& operator<<(Bug &bug_r, std::ostream& (*manipulator)(std::ostream&));
 
 // Output function
 template <class T>
-Bug& operator<<(Bug &bug, const T &t)
+Bug& operator<<(Bug &bug_r, const T &t_r)
 {
     // Write into file if DEBUG keyword is defined
     // else, don't do anything and return the Bug instance
     #ifdef DEBUG
-        bug.File << t;
+        bug_r.File << t_r;
     #endif
     
-    return bug;
+    return bug_r;
 };
 
 #endif // BUG_H_

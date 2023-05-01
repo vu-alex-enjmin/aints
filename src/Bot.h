@@ -8,16 +8,13 @@
 #include "Location.h"
 #include "GuardHillTask.h"
 #include "ReachLocationTask.h"
-#include "ReachAntTask.h"
 #include "CombatEvaluator.h"
 
 // Move directions, represented by characters.
 // Used for telling game engine of the moves to make. 
 const char CDIRECTIONS[4] = {'N', 'E', 'S', 'W'};
 
-/*
-    This struct represents the bot (AI) in the game of Ants
-*/
+// This class represents the bot (AI) in the game of Ants
 class Bot
 {
     public:
@@ -39,8 +36,6 @@ class Bot
         Bot();
         // Plays a single game of Ants
         void PlayGame();
-        // Makes move for a single ant
-        void MakeMove(Ant *ant);
         // Makes moves for a single Turn
         void MakeMoves();
         // Indicates to the engine that it has made its moves
@@ -59,12 +54,12 @@ class Bot
         // Groups of enemies opposing each ally group (same size as allyGroups)
         std::vector<std::unordered_set<Location, Location>> enemyGroups;
 
-
         // >> Task management attributes 
 
-        // tasks for forming a barrier around hills
+        // Tasks for forming a barrier around hills
         std::vector<GuardHillTask> _guardHillTasks;
-        // tasks for attacking invaders inside barriers around hills
+        // Tasks for attacking invaders inside barriers around hills
+        // these tasks consists in making an ant rush towards the enemy at any cost
         std::vector<ReachLocationTask> _defendHillTasks;
         // Ants which are currently blocked by other ants
         // <blocking ant's ID, blocked ant>
@@ -81,7 +76,7 @@ class Bot
 
         // Orders maxAnts ants in searchRadius to move one step towards targetLocation
         // This general function is used by other functions
-        void MoveClosestAvailableAntsTowards(const Location &targetLocation, int searchRange, int maxAnts = 1);
+        void MoveClosestAvailableAntsTowards(const Location &targetLocation_r, int searchRange, int maxAnts = 1);
     
         // Orders ants to look for and go towards nearby food
         void SeekFood();
@@ -100,7 +95,6 @@ class Bot
 
         // Orders ants to make a default move if they aren't doing anything else
         void MakeDefaultMove();
-
         // Move every ant that has chosen a move
         void ExecuteMoves();
 
@@ -116,6 +110,9 @@ class Bot
         void DefendHills();
         // Remove all tasks that are either completed or irrelevant
         void ClearFinishedTasks();
+
+        // Make a single ant execute its move
+        void MakeMove(Ant *ant_p);
 };
 
 #endif // BOT_H_

@@ -14,16 +14,16 @@
 using namespace std;
 
 // Creates an evaluator for combats and give it the pointer to the game's state
-CombatEvaluator::CombatEvaluator(State *gameState)
-    : GameState(gameState)
+CombatEvaluator::CombatEvaluator(State *gameState_p)
+    : GameState_p(gameState_p)
 {
     
 }
 
 // Initializes the combat state
-void CombatEvaluator::Initialize(CombatState *startingCombatState)
+void CombatEvaluator::Initialize(CombatState *startingCombatState_p)
 {
-    CurrentCombatState = startingCombatState;
+    CurrentCombatState_p = startingCombatState_p;
 
     while (!BestMoves.empty())
         BestMoves.pop();
@@ -36,10 +36,10 @@ void CombatEvaluator::Initialize(CombatState *startingCombatState)
 // where one ally group combats one enemy group.
 // The algorithm used is an adaptation of the alpha-beta algorithm, with limited iterations.
 // The objective is minimizing the possible enemy gain while making ally moves.
-void CombatEvaluator::ComputeBestMove(CombatState *startingCombatState)
+void CombatEvaluator::ComputeBestMove(CombatState *startingCombatState_p)
 {
     // Initializes the combat evaluation with the given starting state
-    Initialize(startingCombatState);
+    Initialize(startingCombatState_p);
     // Attempts to compute the best moves for allies within
     // the iteration count constraints
     ComputeNextAllyMove();
@@ -57,11 +57,11 @@ void CombatEvaluator::ComputeNextAllyMove()
     }
     
     // If there are unmoved allies, evaluate their best moves
-    if (CurrentCombatState->UnmovedAllies.size() > 0)
+    if (CurrentCombatState_p->UnmovedAllies.size() > 0)
     {
         // Initialization
-        Ant *toMove = CurrentCombatState->UnmovedAllies.top();
-        CurrentCombatState->UnmovedAllies.pop();
+        Ant *toMove_p = CurrentCombatState_p->UnmovedAllies.top();
+        CurrentCombatState_p->UnmovedAllies.pop();
 
         // Store number of iterations for pseudo-randomness
         int iterations = TotalIterations;
@@ -79,12 +79,12 @@ void CombatEvaluator::ComputeNextAllyMove()
             // Get next location for iterations' move
             nextLocation = 
                 (move == -1) ? 
-                (toMove->CurrentLocation) :
-                WrapGridAlgorithm::GetLocation(toMove->CurrentLocation, move);
+                (toMove_p->CurrentLocation) :
+                WrapGridAlgorithm::GetLocation(toMove_p->CurrentLocation, move);
             
             // Check next location validity (no Water & no moved Ally)
-            if ((GameState->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
-                (CurrentCombatState->MovedAllyLocations.count(nextLocation) > 0))
+            if ((GameState_p->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
+                (CurrentCombatState_p->MovedAllyLocations.count(nextLocation) > 0))
             {
                 continue;
             }
@@ -92,34 +92,34 @@ void CombatEvaluator::ComputeNextAllyMove()
             moveMade = true;
 
             // Register current move
-            CurrentCombatState->AlliesPerformedMoves.push(pair(toMove, move));
-            CurrentCombatState->MovedAllyLocations.insert(nextLocation);
+            CurrentCombatState_p->AlliesPerformedMoves.push(pair(toMove_p, move));
+            CurrentCombatState_p->MovedAllyLocations.insert(nextLocation);
 
             // Compute remaining moves
             ComputeNextAllyMove();
             
             // Revert current Move
-            CurrentCombatState->MovedAllyLocations.erase(nextLocation);
-            CurrentCombatState->AlliesPerformedMoves.pop();
+            CurrentCombatState_p->MovedAllyLocations.erase(nextLocation);
+            CurrentCombatState_p->AlliesPerformedMoves.pop();
         }
         
         // Don't move if no move is possible without colliding with an ally
         if (!moveMade) 
         {
-            nextLocation = toMove->CurrentLocation;
+            nextLocation = toMove_p->CurrentLocation;
             // Register current move (not moving)
-            CurrentCombatState->AlliesPerformedMoves.push(pair(toMove, -1));
-            CurrentCombatState->MovedAllyLocations.insert(nextLocation);
+            CurrentCombatState_p->AlliesPerformedMoves.push(pair(toMove_p, -1));
+            CurrentCombatState_p->MovedAllyLocations.insert(nextLocation);
 
             // Compute remaining moves
             ComputeNextAllyMove();
             
             // Revert current Move
-            CurrentCombatState->MovedAllyLocations.erase(nextLocation);
-            CurrentCombatState->AlliesPerformedMoves.pop();
+            CurrentCombatState_p->MovedAllyLocations.erase(nextLocation);
+            CurrentCombatState_p->AlliesPerformedMoves.pop();
         }
         // Revert
-        CurrentCombatState->UnmovedAllies.push(toMove);
+        CurrentCombatState_p->UnmovedAllies.push(toMove_p);
     }
     else
     {
@@ -128,7 +128,7 @@ void CombatEvaluator::ComputeNextAllyMove()
         if (gain > BestGain)
         {
             BestGain = gain;
-            BestMoves = CurrentCombatState->AlliesPerformedMoves;
+            BestMoves = CurrentCombatState_p->AlliesPerformedMoves;
         }
     }
 }
@@ -147,11 +147,11 @@ int CombatEvaluator::ComputeNextEnemyMove()
     }
 
     // If there are unmoved enemies, evaluate their best moves
-    if (CurrentCombatState->UnmovedEnemies.size() > 0)
+    if (CurrentCombatState_p->UnmovedEnemies.size() > 0)
     {
         // Initialization
-        Ant *toMove = CurrentCombatState->UnmovedEnemies.top();
-        CurrentCombatState->UnmovedEnemies.pop();
+        Ant *toMove_p = CurrentCombatState_p->UnmovedEnemies.top();
+        CurrentCombatState_p->UnmovedEnemies.pop();
 
         // Store number of iterations for pseudo-randomness
         int iterations = TotalIterations;
@@ -172,12 +172,12 @@ int CombatEvaluator::ComputeNextEnemyMove()
             // Get next location for iterations' move
             nextLocation = 
                 (move == -1) ? 
-                (toMove->CurrentLocation) :
-                WrapGridAlgorithm::GetLocation(toMove->CurrentLocation, move);
+                (toMove_p->CurrentLocation) :
+                WrapGridAlgorithm::GetLocation(toMove_p->CurrentLocation, move);
             
             // Check next location validity (no Water & no moved Ally)
-            if ((GameState->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
-                (CurrentCombatState->MovedEnemyLocations.count(nextLocation) > 0))
+            if ((GameState_p->Grid[nextLocation.Row][nextLocation.Col].IsWater) || 
+                (CurrentCombatState_p->MovedEnemyLocations.count(nextLocation) > 0))
             {
                 continue;
             }
@@ -185,19 +185,19 @@ int CombatEvaluator::ComputeNextEnemyMove()
             moveMade = true;
 
             // Attempt Move
-            CurrentCombatState->MovedEnemyLocations.insert(nextLocation);
+            CurrentCombatState_p->MovedEnemyLocations.insert(nextLocation);
 
             // Compute gain for configuration
             int currentGain = ComputeNextEnemyMove();
 
             // Revert Move
-            CurrentCombatState->MovedEnemyLocations.erase(nextLocation);
+            CurrentCombatState_p->MovedEnemyLocations.erase(nextLocation);
 
             // If ally gain is worse than the best possible ally gain, then
             // this branch can be pruned
             if (currentGain < BestGain)
             {
-                CurrentCombatState->UnmovedEnemies.push(toMove);
+                CurrentCombatState_p->UnmovedEnemies.push(toMove_p);
                 return numeric_limits<int>::min();
             }
 
@@ -212,17 +212,17 @@ int CombatEvaluator::ComputeNextEnemyMove()
         // Don't move if no move is possible without colliding with an enemy
         if (!moveMade) 
         {
-            nextLocation = toMove->CurrentLocation;
+            nextLocation = toMove_p->CurrentLocation;
             // Attempt Move (not moving)
-            CurrentCombatState->MovedEnemyLocations.insert(nextLocation);
+            CurrentCombatState_p->MovedEnemyLocations.insert(nextLocation);
             // Compute gain for configuration
             currentLowestGain = ComputeNextEnemyMove();
             // Revert current Move
-            CurrentCombatState->MovedAllyLocations.erase(nextLocation);
+            CurrentCombatState_p->MovedAllyLocations.erase(nextLocation);
         }
 
         // Revert
-        CurrentCombatState->UnmovedEnemies.push(toMove);
+        CurrentCombatState_p->UnmovedEnemies.push(toMove_p);
 
         // Return best enemy gain (lowest ally gain)
         return currentLowestGain;
@@ -242,38 +242,38 @@ int CombatEvaluator::EvaluateCurrentCombatState()
     std::unordered_map<const Location, int, Location> EnemiesOpponentCount;
     
     // Initialize opponent count for allies and enemies
-    for (const auto &allyLoc : CurrentCombatState->MovedAllyLocations) 
+    for (const auto &allyLoc_r : CurrentCombatState_p->MovedAllyLocations) 
     {
-        AlliesOpponentCount[allyLoc] = 0;
+        AlliesOpponentCount[allyLoc_r] = 0;
     }
-    for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations) 
+    for (const auto &enemyLoc_r : CurrentCombatState_p->MovedEnemyLocations) 
     {
-        EnemiesOpponentCount[enemyLoc] = 0;
+        EnemiesOpponentCount[enemyLoc_r] = 0;
     }
 
     // Compute opponent count for allies and enemies
-    for (const auto &allyLoc : CurrentCombatState->MovedAllyLocations) 
+    for (const auto &allyLoc_r : CurrentCombatState_p->MovedAllyLocations) 
     {
-        for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations) 
+        for (const auto &enemyLoc_r : CurrentCombatState_p->MovedEnemyLocations) 
         {
-            if (WrapGridAlgorithm::Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(allyLoc_r, enemyLoc_r) > GameState_p->AttackRadius2)
                 continue;
             
-            AlliesOpponentCount[allyLoc]++;
-            EnemiesOpponentCount[enemyLoc]++;
+            AlliesOpponentCount[allyLoc_r]++;
+            EnemiesOpponentCount[enemyLoc_r]++;
         }
     }
 
     // Compute how many ally ant will die
     int allyDeathCount = 0;
-    for (const auto &allyLoc : CurrentCombatState->MovedAllyLocations) 
+    for (const auto &allyLoc_r : CurrentCombatState_p->MovedAllyLocations) 
     {
-        for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations) 
+        for (const auto &enemyLoc_r : CurrentCombatState_p->MovedEnemyLocations) 
         {
-            if (WrapGridAlgorithm::Distance2(allyLoc, enemyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(allyLoc_r, enemyLoc_r) > GameState_p->AttackRadius2)
                 continue;
             
-            if (AlliesOpponentCount[allyLoc] >= EnemiesOpponentCount[enemyLoc])
+            if (AlliesOpponentCount[allyLoc_r] >= EnemiesOpponentCount[enemyLoc_r])
             {
                 allyDeathCount++;
                 break;
@@ -283,14 +283,14 @@ int CombatEvaluator::EvaluateCurrentCombatState()
 
     // Compute how many enemy ant will die
     int enemyDeathCount = 0;
-    for (const auto &enemyLoc : CurrentCombatState->MovedEnemyLocations)
+    for (const auto &enemyLoc_r : CurrentCombatState_p->MovedEnemyLocations)
     {
-        for (const auto &allyLoc : CurrentCombatState->MovedAllyLocations)
+        for (const auto &allyLoc_r : CurrentCombatState_p->MovedAllyLocations)
         {
-            if (WrapGridAlgorithm::Distance2(enemyLoc, allyLoc) > GameState->AttackRadius2)
+            if (WrapGridAlgorithm::Distance2(enemyLoc_r, allyLoc_r) > GameState_p->AttackRadius2)
                 continue;
             
-            if (EnemiesOpponentCount[enemyLoc] >= AlliesOpponentCount[allyLoc])
+            if (EnemiesOpponentCount[enemyLoc_r] >= AlliesOpponentCount[allyLoc_r])
             {
                 enemyDeathCount++;
                 break;

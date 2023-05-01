@@ -1,22 +1,22 @@
 #include "TaskAgent.h"
 
 TaskAgent::TaskAgent()
-    : CurrentTask(nullptr)
+    : CurrentTask_p(nullptr)
 {
 
 }
 
-// Unassigns CurrentTask on destruction
+// Unassigns CurrentTask_p on destruction
 TaskAgent::~TaskAgent()
 {
-    if (CurrentTask == nullptr)
+    if (CurrentTask_p == nullptr)
         return;
     
-    CurrentTask->Unassign();
+    CurrentTask_p->Unassign();
 }
 
-// Checks if CurrentTask points to something
+// Checks if CurrentTask_p points to something
 bool TaskAgent::HasTask() const
 {
-    return CurrentTask != nullptr;
+    return CurrentTask_p != nullptr;
 }

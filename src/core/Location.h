@@ -31,11 +31,11 @@ struct Location
         Location(int row, int col);
 
         // Equality operator
-        bool operator==(const Location &other) const;
+        bool operator==(const Location &other_r) const;
         // Difference operator
-        bool operator!=(const Location &other) const;
+        bool operator!=(const Location &other_r) const;
         // Self-operator (used for hashing Location)
-        size_t operator()(const Location &toHash) const noexcept;
+        size_t operator()(const Location &toHash_r) const noexcept;
 };
 
 #endif // LOCATION_H_

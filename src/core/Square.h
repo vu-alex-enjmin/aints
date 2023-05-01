@@ -35,7 +35,7 @@ struct Square
         int TurnsInFog;
         // Info about the Ant that's on the Square
         // = nullptr when there is no Ant
-        Ant *Ant;
+        Ant *Ant_p;
         
         /*
         =========================================

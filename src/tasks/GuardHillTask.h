@@ -14,7 +14,7 @@ class GuardHillTask : public AntTask
         =========================================
         */
        
-        GuardHillTask(State *state, Location guardedLocation);
+        GuardHillTask(State *state_p, Location guardedLocation);
 
         // Leads the assignee (Ant) towards its _guardedLocation
         virtual void GiveOrderToAssignee() override;
@@ -37,7 +37,7 @@ class GuardHillTask : public AntTask
         =========================================
         */
 
-        virtual int EvaluateCandidate(TaskAgent *candidate) override;
+        virtual int EvaluateCandidate(TaskAgent *candidate_p) override;
 };
 
 #endif // GUARD_HILL_TASK_H_

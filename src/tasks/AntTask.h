@@ -13,7 +13,7 @@ class AntTask : public Task
         =========================================
         */
 
-        AntTask(State *state);
+        AntTask(State *state_p);
 
         virtual void GiveOrderToAssignee() override = 0;
         virtual bool IsValid() override = 0;
@@ -27,7 +27,7 @@ class AntTask : public Task
         */
 
         // Pointer to the Game's State instance
-        State *_state;
+        State *_state_p;
 
         
         /*
@@ -36,7 +36,7 @@ class AntTask : public Task
         =========================================
         */
 
-        virtual int EvaluateCandidate(TaskAgent *candidate) override = 0;
+        virtual int EvaluateCandidate(TaskAgent *candidate_p) override = 0;
 };
 
 #endif // ANT_TASK_H_

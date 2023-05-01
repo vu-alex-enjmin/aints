@@ -101,7 +101,7 @@ struct State
         // Update information related to Hills' existence
         void UpdateHillInformation();
         // Check if pointer points to an ally ant that has not moved yet
-        bool IsAvailableAnt(const Ant *ant);
+        bool IsAvailableAnt(const Ant *ant_p);
         // Check if location in the Grid is an ally ant that has not moved yet
         bool IsAvailableAnt(const Location& location);
         // Check if id is a live ally ant that has not moved yet
@@ -109,9 +109,9 @@ struct State
 };
 
 // Output function for state, used for representing state inside output stream
-std::ostream& operator<<(std::ostream &os, const State &state);
+std::ostream& operator<<(std::ostream &os_r, const State &state_r);
 // Input function, used to initialize/update state
 // after receiving game information
-std::istream& operator>>(std::istream &is, State &state);
+std::istream& operator>>(std::istream &is_r, State &state_r);
 
 #endif // STATE_H_

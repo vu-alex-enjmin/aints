@@ -17,20 +17,20 @@ Location::Location(int row, int col)
 }
 
 // Equality operator
-bool Location::operator==(const Location &other) const 
+bool Location::operator==(const Location &other_r) const 
 {
-    return (this->Col == other.Col) && (this->Row == other.Row);
+    return (this->Col == other_r.Col) && (this->Row == other_r.Row);
 }
 
 // Difference operator
-bool Location::operator!=(const Location &other) const 
+bool Location::operator!=(const Location &other_r) const 
 {
-    return (this->Col != other.Col) || (this->Row != other.Row);
+    return (this->Col != other_r.Col) || (this->Row != other_r.Row);
 }
 
 // Self-operator (used for hashing Location)
-size_t Location::operator()(const Location &toHash) const noexcept
+size_t Location::operator()(const Location &toHash_r) const noexcept
 {
     // https://en.wikipedia.org/wiki/Pairing_function#Cantor_pairing_function
-    return (toHash.Row + toHash.Col) * (toHash.Row + toHash.Col + 1) / 2 + toHash.Row;
+    return (toHash_r.Row + toHash_r.Col) * (toHash_r.Row + toHash_r.Col + 1) / 2 + toHash_r.Row;
 }

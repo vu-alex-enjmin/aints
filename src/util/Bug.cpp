@@ -7,11 +7,11 @@ Bug::Bug()
 }
 
 // Opens the specified file for debug logs
-void Bug::Open(const std::string &filename)
+void Bug::Open(const std::string &filename_r)
 {
     // Open the file only if DEBUG keyword is defined
     #ifdef DEBUG
-        File.open(filename.c_str());
+        File.open(filename_r.c_str());
     #endif
 }
 
@@ -25,13 +25,13 @@ void Bug::Close()
 }
 
 // Output function
-Bug& operator<<(Bug &bug, std::ostream& (*manipulator)(std::ostream&))
+Bug& operator<<(Bug &bug_r, std::ostream& (*manipulator)(std::ostream&))
 {
     // Write into file if DEBUG keyword is defined
     // else, don't do anything and return the Bug instance
     #ifdef DEBUG
-        bug.File << manipulator;
+        bug_r.File << manipulator;
     #endif
 
-    return bug;
+    return bug_r;
 }

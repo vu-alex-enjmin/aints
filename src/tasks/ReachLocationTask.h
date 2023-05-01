@@ -15,7 +15,7 @@ class ReachLocationTask : public AntTask
         =========================================
         */
 
-        ReachLocationTask(State *state, Location targetLocation, int stopDistance = 0);
+        ReachLocationTask(State *state_p, Location targetLocation, int stopDistance = 0);
         // Leads the assignee (Ant) towards its target Location
         virtual void GiveOrderToAssignee() override;
         // returns true when the target is not a Water tile
@@ -40,7 +40,7 @@ class ReachLocationTask : public AntTask
         =========================================
         */
 
-        virtual int EvaluateCandidate(TaskAgent *candidate) override;
+        virtual int EvaluateCandidate(TaskAgent *candidate_p) override;
 };
 
 #endif // REACH_LOCATION_TASK_H_
