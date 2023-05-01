@@ -50,7 +50,7 @@ void Bot::InitializeTasks()
     }
     */
 
-    InitializeGuardHillTasks();
+    InitializeHillProtectionTasks();
     // InitializeAllyReinforcementTasks();
 
     /*
@@ -62,7 +62,7 @@ void Bot::InitializeTasks()
 }
 
 // Creates and assign tasks related to guarding and defending the hill
-void Bot::InitializeGuardHillTasks()
+void Bot::InitializeHillProtectionTasks()
 {
     // Clear previous guard tasks in order to update them
     _guardHillTasks.clear();

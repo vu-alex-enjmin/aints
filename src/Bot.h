@@ -111,7 +111,7 @@ class Bot
         // Creates and assign tasks to ants
         void InitializeTasks();
         // Creates and assign tasks related to guarding and defending the hill
-        void InitializeGuardHillTasks();
+        void InitializeHillProtectionTasks();
         // Creates and assign All
         // TODO commenter si on l'utilise ou pas
         void InitializeAllyReinforcementTasks();
