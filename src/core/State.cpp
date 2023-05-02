@@ -104,7 +104,7 @@ void State::UpdateHillInformation()
 void State::UpdateVisionInformation()
 {
     // Create function for resetting visible squares' turns in fog to 0
-    auto onVisited = [&](const Location& location, int distance, int direction)
+    auto onVisited_f = [&](const Location& location, int distance, int direction)
     {
         Grid[location.Row][location.Col].TurnsInFog = 0;
         return false;
@@ -120,7 +120,7 @@ void State::UpdateVisionInformation()
             antLocation,
             ViewRadius2,
             [&](const Location &loc_r) { return true; },
-            onVisited
+            onVisited_f
         );
     }
 }

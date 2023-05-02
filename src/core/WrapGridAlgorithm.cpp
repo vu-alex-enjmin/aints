@@ -68,11 +68,11 @@ bool WrapGridAlgorithm::AStar
     vector<vector<int>> scores(Rows, vector<int>(Cols, numeric_limits<int>::max()));
     //  directions taken to reach a given location (used to reconstruct the path)
     vector<vector<int>> directions(Rows, vector<int>(Cols, -1));
-    auto comparator = [&](const Location a, const Location b)
+    auto comparator_f = [&](const Location a, const Location b)
     {
         return scores[a.Row][a.Col] > scores[b.Row][b.Col];
     };
-    priority_queue<Location, vector<Location>, decltype(comparator)> locQueue(comparator);
+    priority_queue<Location, vector<Location>, decltype(comparator_f)> locQueue(comparator_f);
 
     // Prime the algorithm
     locQueue.push(startLoc_r);

@@ -180,7 +180,7 @@ void Bot::SeekFood()
         int bestDirection = -1; // default direction is neutral
         int dist;
         
-        // iterate and find best distance and direction towards foods for current ant
+        // iterate and find best distance and direction towards foods for current antonVisited_f_f
         for (int i = 0; i < antDistancePair_r.second.size(); i++)
         {
             dist = antDistancePair_r.second[i];
@@ -200,8 +200,8 @@ void Bot::ExploreFog()
 {
     // Initialize all exploration
     int currentScore;
-    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
-    auto onVisited = [&](const Location &location_r, int distance, int direction)
+    auto isNotWaterPredicate_f = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
+    auto onVisited_f = [&](const Location &location_r, int distance, int direction)
     {
         currentScore += State.Grid[location_r.Row][location_r.Col].TurnsInFog;
         return false;
@@ -236,8 +236,8 @@ void Bot::ExploreFog()
             WrapGridAlgorithm::BreadthFirstSearchSingle(
                 explorationLoc,
                 ((int)State.ViewRadius)+5,
-                isNotWaterPredicate,
-                onVisited
+                isNotWaterPredicate_f,
+                onVisited_f
             );
 
             // If a better direction was found, register it
@@ -278,8 +278,8 @@ void Bot::ComputeArmies()
     //   Initialization
     unordered_set<Location, Location> allyGroup;
 
-    auto isNotWaterPredicate = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
-    auto onVisited = [&](const Location &location_r, int distance, int direction)
+    auto isNotWaterPredicate_f = [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; };
+    auto onVisited_f = [&](const Location &location_r, int distance, int direction)
     {
         if (State.IsAvailableAnt(location_r))
             allyGroup.insert(location_r);
@@ -294,8 +294,8 @@ void Bot::ComputeArmies()
         WrapGridAlgorithm::CircularBreadthFirstSearch(
             antLoc_r, 
             (State.AttackRadius + 2.01) * (State.AttackRadius + 2.01),
-            isNotWaterPredicate, 
-            onVisited
+            isNotWaterPredicate_f, 
+            onVisited_f
         );
 
         // If any allies are inside the group, add the group to the vector
@@ -489,23 +489,23 @@ void Bot::InitializeHillProtectionTasks()
     // Starting from 70 ant (or 50 per hill if we have more than one hill),
     // only 20 are used to do something else than creating the wall.
     // This allows for a huge (and hopefully untraversable) wall to be made.
-    if (((State.MyHills.size() == 1) && (antCount > 70)) || (antCount > (State.MyHills.size() * 50)))
+    if (((State.MyHills.size() == 1) && (antCount > 60)) || (antCount > (State.MyHills.size() * 40)))
     {
         wallRange = (antCount - 20) / (4*State.MyHills.size());
     }
-    else 
+    else
     {
-        wallRange = (1*antCount/5) / (4*State.MyHills.size());
+        wallRange = (1*antCount/4) / (4*State.MyHills.size());
     }
 
     // Range at which enemy ants will have ally ants rushing towards them
-    int defenseRange = max(3, wallRange);
+    int defenseRange = max(4, wallRange);
 
     // Create tasks for wall and retrieve possible candidates for it
     vector<Ant*> hillProtectionCandidates;
 
     // Info processing function for when a tile is visited by BFS
-    auto onVisited = [&,this](const Location &location_r, const int distance, const int outDirection)
+    auto onVisited_f = [&,this](const Location &location_r, const int distance, const int outDirection)
     {
         Square &visitedSquare_r = State.Grid[location_r.Row][location_r.Col];
         if (!visitedSquare_r.IsWater)
@@ -553,7 +553,7 @@ void Bot::InitializeHillProtectionTasks()
         vector(State.MyHills.begin(), State.MyHills.end()),
         defenseRange+10,
         [&](const Location &loc_r) { return !State.Grid[loc_r.Row][loc_r.Col].IsWater; },
-        onVisited
+        onVisited_f
     );
 
     // Create DefendHillTasks
